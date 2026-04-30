@@ -22,7 +22,7 @@ class GameManager:
 
         return {
             "ok": True,
-            "id": id_sala,  # 🔥 cambiado (ANTES id_sala)
+            "id_sala": id_sala,  #  cambiado (ANTES id_sala)
             "jugador": resultado["jugador"]
         }
 
@@ -42,23 +42,9 @@ class GameManager:
     # -------------------------------
     def obtener_estado(self, id_sala):
         sala = self.salas.get(id_sala)
-
         if not sala:
-            return {"ok": False, "error": "Sala no existe"}
-
-        return {
-            "id_sala": sala.id,
-            "jugadores": [
-                {
-                    "id": j.id,
-                    "nombre": j.nombre,
-                    "color": j.color,
-                    "puntos": j.puntos
-                } for j in sala.jugadores
-            ],
-            "turno": sala.turno_actual.id if sala.turno_actual else None,
-            "tablero": sala.tablero.obtener_estado()
-        }
+            return {"ok": False, "error": "Sala no existe"} 
+        return sala.obtener_estado()
 
     # -------------------------------
     # 🔥 NUEVO — HACER MOVIMIENTO

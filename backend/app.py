@@ -23,9 +23,9 @@ def crear_sala():
         data = request.get_json() or {}
         nombre = data.get("nombre", "Jugador")
 
-        id_sala = pyro.crear_sala(nombre)
+        resultado = pyro.crear_sala(nombre)
 
-        return jsonify({"id": id_sala})
+        return jsonify(resultado)
 
     except Exception as e:
         print("ERROR crear_sala:", e)

@@ -59,11 +59,17 @@ class Sala:
     # -------------------------------
     def hacer_movimiento(self, jugador_id, tipo, fila, col):
         with self.lock:
+
             if not self.iniciada:
                 return {"ok": False, "error": "La partida no ha iniciado"}
 
             if self.tablero.juego_terminado():
                 return {"ok": False, "error": "El juego ya terminó"}
+
+            if tipo in ["H", "h"]:
+                tipo = "horizontal" 
+            elif tipo in ["V", "v"]:
+                tipo = "vertical"
 
             if tipo not in ["horizontal", "vertical"]:
                 return {"ok": False, "error": "Tipo inválido"}

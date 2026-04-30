@@ -31,7 +31,54 @@ async function crearSala() {
     console.log("Sala creada:", data);
 
     actualizarEstado();
-    setInterval(actualizarEstado, 1000);
+    if(!window.intervaloEstado) {
+        window.intervaloEstado = setInterval(actualizarEstado, 1000);
+    }
+}
+
+async function unirseSala() {
+    const nombre = document.getElementById("nombre").value.trim();
+    const id = document.getElementById("idSalaInput").value.trim();
+
+    if (!nombre) {
+        alert("Escribe tu nombre antes de unirte a una sala.");
+        return;
+    }
+
+    if (!id) {
+        alert("Escribe el ID de la sala.");
+        return;
+    }
+
+    const res = await fetch("http://127.0.0.1:5000/unirse_sala", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id_sala: id,
+            nombre: nombre
+        })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+        alert(data.error || "No se pudo unir a la sala.");
+        return;
+    }
+
+    idSala = id;
+    jugadorId = data.jugador.id;
+
+    console.log("Unido a sala:", idSala);
+    console.log("Jugador:", jugadorId);
+
+    actualizarEstado();
+
+    if (!window.intervaloEstado) {
+        window.intervaloEstado = setInterval(actualizarEstado, 1000);
+    }
 }
 
 async function actualizarEstado() {
