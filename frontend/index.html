@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dots and Boxes</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial;
+            background: #1e1e2f;
+            color: white;
+        }
+
+        canvas {
+            background: #2a2a40;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 Dots and Boxes</h1>
+
+    <input id="nombre" placeholder="Tu nombre">
+    <button onclick="crearSala()">Crear Sala</button>
+
+    <canvas id="gameCanvas" width="600" height="500"></canvas>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
