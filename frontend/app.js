@@ -26,7 +26,7 @@ async function crearSala() {
     const data = await res.json();
 
     idSala = data.id_sala;
-    jugadorId = data.jugador.id_sala;
+    jugadorId = data.jugador.id;
 
     console.log("Sala creada:", data);
 

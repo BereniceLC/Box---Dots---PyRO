@@ -36,9 +36,9 @@ class Sala:
 
             self.jugadores.append(jugador)
 
-            # Iniciar automáticamente cuando haya al menos 2 jugadores
             if len(self.jugadores) >= 2:
                 self.iniciada = True
+                self.turno_actual = 0  # asegurar inicio consistente
 
             return {
                 "ok": True,
@@ -62,9 +62,21 @@ class Sala:
             if not self.iniciada:
                 return {"ok": False, "error": "La partida no ha iniciado"}
 
+            if self.tablero.juego_terminado():
+                return {"ok": False, "error": "El juego ya terminó"}
+
+            if tipo not in ["horizontal", "vertical"]:
+                return {"ok": False, "error": "Tipo inválido"}
+
+            if not isinstance(fila, int) or not isinstance(col, int):
+                return {"ok": False, "error": "Fila/col inválidas"}
+
             jugador = self._obtener_jugador(jugador_id)
             if not jugador:
                 return {"ok": False, "error": "Jugador no encontrado"}
+
+            if not self.jugadores:
+                return {"ok": False, "error": "No hay jugadores"}
 
             jugador_actual = self.jugadores[self.turno_actual]
 
@@ -76,21 +88,20 @@ class Sala:
             if not resultado["ok"]:
                 return resultado
 
-            cuadros = resultado["cuadros"]
             puntos = resultado["puntos"]
+            cuadros = resultado["cuadros"]
 
-            # Sumar puntos
             if puntos > 0:
                 jugador["puntos"] += puntos
             else:
-                # Cambiar turno solo si no hizo punto
-                self.turno_actual = (self.turno_actual + 1) % len(self.jugadores)
+                if len(self.jugadores) > 0:
+                    self.turno_actual = (self.turno_actual + 1) % len(self.jugadores)
 
             return {
                 "ok": True,
                 "puntos_ganados": puntos,
                 "cuadros": cuadros,
-                "turno": self.jugadores[self.turno_actual]["id"],
+                "turno": self.jugadores[self.turno_actual]["id"] if self.jugadores else None,
                 "juego_terminado": self.tablero.juego_terminado()
             }
 
@@ -98,11 +109,16 @@ class Sala:
     # ESTADO DE LA SALA
     # -------------------------------
     def obtener_estado(self):
-        return {
-            "id_sala": self.id_sala,
-            "jugadores": self.jugadores,
-            "turno": self.jugadores[self.turno_actual]["id"] if self.jugadores else None,
-            "tablero": self.tablero.obtener_estado(),
-            "iniciada": self.iniciada,
-            "terminado": self.tablero.juego_terminado()
-        }
+        with self.lock:
+            turno = None
+            if self.jugadores and self.turno_actual < len(self.jugadores):
+                turno = self.jugadores[self.turno_actual]["id"]
+
+            return {
+                "id_sala": self.id_sala,
+                "jugadores": self.jugadores,
+                "turno": turno,
+                "tablero": self.tablero.obtener_estado(),
+                "iniciada": self.iniciada,
+                "terminado": self.tablero.juego_terminado()
+            }
