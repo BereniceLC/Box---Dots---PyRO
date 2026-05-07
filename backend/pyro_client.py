@@ -1,40 +1,60 @@
+import threading
 import Pyro5.api
 
 
 class PyroClient:
+    def __init__(self):
+        self.uri = None
+        self.lock = threading.Lock()
 
-    def _get_proxy(self):
+    def _resolver_uri(self):
+        if self.uri is not None:
+            return self.uri
+
+        with self.lock:
+            if self.uri is None:
+                print("[PyroClient] Buscando Name Server...")
+                ns = Pyro5.api.locate_ns()
+                self.uri = ns.lookup("game.manager")
+                print("[PyroClient] URI encontrada:", self.uri)
+
+        return self.uri
+
+    def _llamar(self, metodo, *args):
         try:
-            ns = Pyro5.api.locate_ns()
-            uri = ns.lookup("game.manager")
-            return Pyro5.api.Proxy(uri)
-        except Exception as e:
-            print("ERROR PyRO conexión:", e)
-            raise
+            uri = self._resolver_uri()
 
+            with Pyro5.api.Proxy(uri) as proxy:
+                funcion = getattr(proxy, metodo)
+                return funcion(*args)
+
+        except Exception as e:
+            print("[PyroClient] Error, reiniciando URI:", e)
+
+            with self.lock:
+                self.uri = None
+
+            uri = self._resolver_uri()
+
+            with Pyro5.api.Proxy(uri) as proxy:
+                funcion = getattr(proxy, metodo)
+                return funcion(*args)
 
     def crear_sala(self, nombre):
-        with self._get_proxy() as proxy:
-            return proxy.crear_sala(nombre)
-
+        return self._llamar("crear_sala", nombre)
 
     def unirse_sala(self, id_sala, nombre):
-        with self._get_proxy() as proxy:
-            return proxy.unirse_sala(id_sala, nombre)
-
+        return self._llamar("unirse_sala", id_sala, nombre)
 
     def obtener_estado(self, id_sala):
-        with self._get_proxy() as proxy:
-            return proxy.obtener_estado(id_sala)
+        return self._llamar("obtener_estado", id_sala)
 
-
-    # ✅ CORREGIDO — ya no accede a objeto sala directo
     def hacer_movimiento(self, id_sala, jugador_id, tipo, fila, col):
-        with self._get_proxy() as proxy:
-            return proxy.hacer_movimiento(
-                id_sala,
-                jugador_id,
-                tipo,
-                fila,
-                col
-            )
+        return self._llamar(
+            "hacer_movimiento",
+            id_sala,
+            jugador_id,
+            tipo,
+            fila,
+            col
+        )

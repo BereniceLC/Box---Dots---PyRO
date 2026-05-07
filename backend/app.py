@@ -1,3 +1,4 @@
+import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pyro_client import PyroClient
@@ -5,7 +6,7 @@ from pyro_client import PyroClient
 app = Flask(__name__)
 
 # CORS correcto (no duplicado)
-CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
+CORS(app, resources={r"/*": {"origins": "http://26.2.172.238:5500"}})
 
 # Cliente PyRO
 pyro = PyroClient()
@@ -53,18 +54,26 @@ def unirse():
 # ✅ Obtener estado (desde PyRO, no local)
 @app.route("/estado/<id_sala>", methods=["GET"])
 def estado(id_sala):
+    inicio = time.time()
+
     try:
         estado = pyro.obtener_estado(id_sala)
+        fin = time.time()
+        print(f"[TIEMPO] /estado/{id_sala} tardó {fin - inicio:.3f} segundos")
+
         return jsonify(estado)
 
     except Exception as e:
-        print("ERROR estado:", e)
+        fin = time.time()
+        print(f"[ERROR estado] tardó {fin - inicio:.3f} segundos")
         return jsonify({"error": str(e)}), 500
 
 
 # ✅ Movimiento (validado + PyRO)
 @app.route("/movimiento", methods=["POST"])
 def movimiento():
+    inicio = time.time()
+
     try:
         data = request.get_json()
 
@@ -79,11 +88,14 @@ def movimiento():
             data["fila"],
             data["col"]
         )
+        fin = time.time()
+        print(f"[TIEMPO] /movimiento tardó {fin - inicio:.3f} segundos")
 
         return jsonify(resultado)
 
     except Exception as e:
-        print("ERROR movimiento:", e)
+        fin = time.time()
+        print(f"[ERROR movimiento] tardó {fin - inicio:.3f} segundos")
         return jsonify({"error": str(e)}), 500
 
 

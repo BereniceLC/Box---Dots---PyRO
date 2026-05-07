@@ -11,7 +11,7 @@ const offset = 50;
 async function crearSala() {
     const nombre = document.getElementById("nombre").value;
 
-    const res = await fetch("http://127.0.0.1:5000/crear_sala", {
+    const res = await fetch("http://26.2.172.238:5000/crear_sala", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ nombre })
@@ -50,7 +50,7 @@ async function unirseSala() {
         return;
     }
 
-    const res = await fetch("http://127.0.0.1:5000/unirse_sala", {
+    const res = await fetch("http://26.2.172.238:5000/unirse_sala", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -84,10 +84,31 @@ async function unirseSala() {
 async function actualizarEstado() {
     if (!idSala) return;
 
-    const res = await fetch(`http://127.0.0.1:5000/estado/${idSala}`);
+    const res = await fetch(`http://26.2.172.238:5000/estado/${idSala}`);
     estado = await res.json();
 
     dibujar();
+}
+
+function obtenerColorJugador(idJugador) {
+     if (!estado || !estado.jugadores) {
+      return "white";
+    }
+
+  const jugador = estado.jugadores.find(j => j.id === idJugador);
+
+  if (!jugador) {
+    return "white";
+  }
+
+  const colores = {
+    rojo: "#e74c3c",
+    azul: "#3498db",
+    morado: "#9b59b6",
+    verde: "#2ecc71"
+  };
+
+  return colores[jugador.color] || jugador.color || "white";
 }
 
 function dibujar() {
@@ -108,32 +129,32 @@ function dibujar() {
     }
 
     // Dibujar líneas horizontales
-    horizontal.forEach((fila, i) => {
-        fila.forEach((linea, j) => {
-            if (linea) {
-                ctx.strokeStyle = "red";
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(offset + j * spacing, offset + i * spacing);
-                ctx.lineTo(offset + (j + 1) * spacing, offset + i * spacing);
-                ctx.stroke();
-            }
-        });
-    });
+horizontal.forEach((fila, i) => {
+  fila.forEach((linea, j) => {
+    if (linea) {
+      ctx.strokeStyle = obtenerColorJugador(linea);
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(offset + j * spacing, offset + i * spacing);
+      ctx.lineTo(offset + (j + 1) * spacing, offset + i * spacing);
+      ctx.stroke();
+    }
+  });
+});
 
     // Dibujar líneas verticales
-    vertical.forEach((fila, i) => {
-        fila.forEach((linea, j) => {
-            if (linea) {
-                ctx.strokeStyle = "blue";
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(offset + j * spacing, offset + i * spacing);
-                ctx.lineTo(offset + j * spacing, offset + (i + 1) * spacing);
-                ctx.stroke();
-            }
-        });
-    });
+vertical.forEach((fila, i) => {
+  fila.forEach((linea, j) => {
+    if (linea) {
+      ctx.strokeStyle = obtenerColorJugador(linea);
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(offset + j * spacing, offset + i * spacing);
+      ctx.lineTo(offset + j * spacing, offset + (i + 1) * spacing);
+      ctx.stroke();
+    }
+  });
+});
 }
 
 // Detectar clics
@@ -181,7 +202,7 @@ canvas.addEventListener("click", async (e) => {
     }
 
     if (mejor) {
-        await fetch("http://127.0.0.1:5000/movimiento", {
+        await fetch("http://26.2.172.238:5000/movimiento", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
