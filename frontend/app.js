@@ -33,6 +33,12 @@ async function crearSala() {
 
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
+    
+    const inputSala = document.getElementById("idSalaInput");
+        if (inputSala) {
+            inputSala.value = idSala;
+        }
+
     ganadorMostrado = false;
     console.log("Sala creada:", data);
 
@@ -44,7 +50,7 @@ async function crearSala() {
 
 async function unirseSala() {
     const nombre = document.getElementById("nombre").value.trim();
-    const id = document.getElementById("idSalaInput").value.trim();
+    const id = document.getElementById("idSalaInput").value.trim().toUpperCase();
 
     if (!nombre) {
         alert("Escribe tu nombre antes de unirte a una sala.");

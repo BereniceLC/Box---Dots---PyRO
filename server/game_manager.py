@@ -1,5 +1,4 @@
 import secrets 
-import string
 import Pyro5.api
 
 from sala import Sala
@@ -9,6 +8,7 @@ from sala import Sala
 class GameManager:
     def __init__(self):
         self.salas = {}
+
     def generar_codigo_sala(self):
         caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
@@ -25,10 +25,10 @@ class GameManager:
         id_sala = self.generar_codigo_sala()
 
         sala = Sala(id_sala)
-
+        self.salas[id_sala] = sala
         resultado = sala.agregar_jugador(nombre_jugador)
 
-        self.salas[id_sala] = sala
+        
         return {
             "ok": True,
             "id_sala": id_sala,  #  cambiado (ANTES id_sala)
@@ -56,7 +56,7 @@ class GameManager:
         return sala.obtener_estado()
 
     # -------------------------------
-    # 🔥 NUEVO — HACER MOVIMIENTO
+    #  HACER MOVIMIENTO
     # -------------------------------
     def hacer_movimiento(self, id_sala, jugador_id, tipo, fila, col):
         sala = self.salas.get(id_sala)

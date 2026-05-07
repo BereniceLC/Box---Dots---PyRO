@@ -1,43 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Dots and Boxes</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial;
-            background: #1e1e2f;
-            color: white;
-        }
-
-        canvas {
-            background: #2a2a40;
-            margin-top: 20px;
-            border-radius: 10px;
-        }
-
-        button {
-            padding: 10px;
-            margin: 10px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Dots & Boxes PyRO</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <h1>🎮 Dots and Boxes</h1>
+  <main class="app">
 
-    <input id="nombre" placeholder="Tu nombre">
-    <button onclick="crearSala()">Crear Sala</button>
-    <br><br>
+    <!-- Pantalla principal -->
+    <section id="pantallaMenu" class="screen active">
+      <div class="card hero-card">
+        <h1>Dots & Boxes</h1>
+        <p class="subtitle">
+          Juego multijugador remoto con salas y turnos usando PyRO.
+        </p>
 
-    <input id="idSalaInput" placeholder="ID de la sala">
-    <button onclick="unirseSala()">Unirse a Sala</button>
-    <br><br>
+        <div class="menu-actions">
+          <button class="btn primary" onclick="mostrarCrearSala()">
+            Crear sala
+          </button>
 
-    <canvas id="gameCanvas" width="600" height="500"></canvas>
+          <button class="btn secondary" onclick="mostrarUnirseSala()">
+            Unirse a sala
+          </button>
+        </div>
+      </div>
+    </section>
 
-    <script src="app.js"></script>
+    <!-- Pantalla crear sala -->
+    <section id="pantallaCrear" class="screen">
+      <div class="card form-card">
+        <button class="back-btn" onclick="volverAlMenu()">← Volver</button>
 
+        <h2>Crear sala</h2>
+        <p class="description">
+          Escribe tu nombre para crear una nueva partida.
+        </p>
+
+        <label for="nombreCrear">Tu nombre</label>
+        <input id="nombreCrear" type="text" placeholder="Ej. Alejandro">
+
+        <button class="btn primary full" onclick="crearSalaDesdeMenu()">
+          Crear sala
+        </button>
+
+        <div id="codigoCreadoBox" class="room-code-box hidden">
+          <p>Sala creada</p>
+          <strong id="codigoSalaTexto">------</strong>
+
+          <button class="btn small" onclick="copiarCodigoSala()">
+            Copiar código
+          </button>
+
+          <p class="hint">
+            Comparte este código con los demás jugadores.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pantalla unirse a sala -->
+    <section id="pantallaUnirse" class="screen">
+      <div class="card form-card">
+        <button class="back-btn" onclick="volverAlMenu()">← Volver</button>
+
+        <h2>Unirse a sala</h2>
+        <p class="description">
+          Ingresa tu nombre y el código corto de la sala.
+        </p>
+
+        <label for="nombreUnirse">Tu nombre</label>
+        <input id="nombreUnirse" type="text" placeholder="Ej. Ingrid">
+
+        <label for="idSalaInput">Código de sala</label>
+        <input
+          id="idSalaInput"
+          type="text"
+          placeholder="Ej. F8K2MZ"
+          maxlength="6"
+          style="text-transform: uppercase;"
+        >
+
+        <button class="btn primary full" onclick="unirseSala()">
+          Entrar a sala
+        </button>
+      </div>
+    </section>
+
+    <!-- Pantalla de juego -->
+    <section id="pantallaJuego" class="screen">
+      <div class="game-layout">
+
+        <aside class="sidebar card">
+          <h2>Partida</h2>
+
+          <div class="info-block">
+            <span>Código de sala</span>
+            <strong id="codigoSalaJuego">------</strong>
+            <button class="btn small" onclick="copiarCodigoSala()">
+              Copiar
+            </button>
+          </div>
+
+          <div class="info-block">
+            <span>Turno actual</span>
+            <strong id="turnoActualTexto">Esperando...</strong>
+          </div>
+
+          <div class="info-block">
+            <span>Jugadores</span>
+            <div id="listaJugadores" class="players-list">
+              Esperando jugadores...
+            </div>
+          </div>
+
+          <div id="mensajeJuego" class="game-message">
+            Crea o únete a una sala para comenzar.
+          </div>
+        </aside>
+
+        <section class="board-card card">
+          <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </section>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Inputs ocultos para conservar compatibilidad con app.js -->
+  <input id="nombre" type="hidden">
+
+  <script src="app.js"></script>
 </body>
 </html>
