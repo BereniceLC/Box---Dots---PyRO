@@ -7,11 +7,12 @@ let estado = null;
 
 const spacing = 60;
 const offset = 50;
+const API_URL = "http://26.2.172.238:5000"; // Cambia esto a tu IP y puerto
 
 async function crearSala() {
     const nombre = document.getElementById("nombre").value;
 
-    const res = await fetch("http://26.2.172.238:5000/crear_sala", {
+    const res = await fetch(`${API_URL}/crear_sala`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ nombre })
@@ -50,7 +51,7 @@ async function unirseSala() {
         return;
     }
 
-    const res = await fetch("http://26.2.172.238:5000/unirse_sala", {
+    const res = await fetch(`${API_URL}/unirse_sala`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -84,7 +85,7 @@ async function unirseSala() {
 async function actualizarEstado() {
     if (!idSala) return;
 
-    const res = await fetch(`http://26.2.172.238:5000/estado/${idSala}`);
+    const res = await fetch(`${API_URL}/estado/${idSala}`);
     estado = await res.json();
 
     dibujar();
@@ -202,7 +203,7 @@ canvas.addEventListener("click", async (e) => {
     }
 
     if (mejor) {
-        await fetch("http://26.2.172.238:5000/movimiento", {
+        await fetch(`${API_URL}/movimiento`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({

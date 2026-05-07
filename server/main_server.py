@@ -3,8 +3,8 @@ from game_manager import GameManager
 
 
 def main():
-    daemon = Pyro5.api.Daemon()
-    ns = Pyro5.api.locate_ns()
+    daemon = Pyro5.api.Daemon(host="127.0.0.1")
+    ns = Pyro5.api.locate_ns(host="127.0.0.1")
 
     game_manager = GameManager()
 

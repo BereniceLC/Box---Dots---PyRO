@@ -6,7 +6,7 @@ from pyro_client import PyroClient
 app = Flask(__name__)
 
 # CORS correcto (no duplicado)
-CORS(app, resources={r"/*": {"origins": "http://26.2.172.238:5500"}})
+CORS(app)
 
 # Cliente PyRO
 pyro = PyroClient()
@@ -100,4 +100,4 @@ def movimiento():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)

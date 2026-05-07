@@ -14,7 +14,7 @@ class PyroClient:
         with self.lock:
             if self.uri is None:
                 print("[PyroClient] Buscando Name Server...")
-                ns = Pyro5.api.locate_ns()
+                ns = Pyro5.api.locate_ns(host="127.0.0.1")
                 self.uri = ns.lookup("game.manager")
                 print("[PyroClient] URI encontrada:", self.uri)
 
