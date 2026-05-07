@@ -120,7 +120,7 @@ async function crearSalaDesdeMenu() {
 }
 
 async function crearSala() {
-    const nombre = document.getElementById("nombre").value;
+    const nombre = document.getElementById("nombre").value.trim();
 
     const res = await fetch(`${API_URL}/crear_sala`, {
         method: "POST",
@@ -129,15 +129,21 @@ async function crearSala() {
     });
 
     if (!res.ok) {
-    const text = await res.text(); // para ver el error real (HTML o JSON roto)
-    console.error("Error del servidor:", text);
-    return; // evita que intente hacer res.json()
+        const text = await res.text();
+        console.error("Error del servidor:", text);
+        return;
     }
 
     const data = await res.json();
 
+    if (!data.ok) {
+        alert(data.error || "No se pudo crear la sala.");
+        return;
+    }
+
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
+    ganadorMostrado = false;
 
     const codigoTexto = document.getElementById("codigoSalaTexto");
     const codigoJuego = document.getElementById("codigoSalaJuego");
@@ -155,18 +161,7 @@ async function crearSala() {
     await actualizarEstado();
     iniciarActualizacionEstado();
 
-    const inputSala = document.getElementById("idSalaInput");
-        if (inputSala) {
-            inputSala.value = idSala;
-        }
-
-    ganadorMostrado = false;
     console.log("Sala creada:", data);
-
-    actualizarEstado();
-    if(!window.intervaloEstado) {
-        window.intervaloEstado = setInterval(actualizarEstado, 1000);
-    }
 }
 
 async function unirseSala() {
@@ -225,10 +220,9 @@ async function unirseSala() {
     console.log("Jugador:", jugadorId);
 
     actualizarEstado();
-
-    if (!window.intervaloEstado) {
-        window.intervaloEstado = setInterval(actualizarEstado, 1000);
-    }
+    
+    await actualizarEstado();
+    iniciarActualizacionEstado();
 }
 
 async function actualizarEstado() {
@@ -266,6 +260,14 @@ async function actualizarEstado() {
     } catch (error) {
         console.error("Error de red al actualizar estado:", error);
     }
+}
+
+function iniciarActualizacionEstado() {
+    if (intervaloEstado) {
+        clearInterval(intervaloEstado);
+    }
+
+  intervaloEstado = setInterval(actualizarEstado, 300);
 }
 
 function obtenerColorJugador(idJugador) {
