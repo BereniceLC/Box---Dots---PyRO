@@ -122,10 +122,28 @@
         </aside>
 
         <section class="board-card card">
-          <canvas id="gameCanvas" width="600" height="600"></canvas>
+            <div class = "board-wrapper">
+                <canvas id="gameCanvas" width="600" height="600"></canvas>
+            </div>
         </section>
 
       </div>
+
+      <div id="modalFinal" class="modal-overlay hidden">
+        <div class="modal-card">
+          <h2>Juego terminado</h2>
+          <p id="resultadoFinalTexto">Resultado final</p>
+
+          <div id="resultadoFinalPuntajes" class="final-scores"></div>
+
+          <div class="modal-actions">
+            <button class="btn secondary" onclick="volverAlMenuDesdeFinal()">
+              Volver al menú principal
+            </button>
+          </div>
+        </div>
+      </div>
+
     </section>
 
   </main>

@@ -122,6 +122,11 @@ async function crearSalaDesdeMenu() {
 async function crearSala() {
     const nombre = document.getElementById("nombre").value.trim();
 
+    if (!nombre) {
+        alert("Escribe tu nombre antes de crear una sala.");
+        return;
+    }
+
     const res = await fetch(`${API_URL}/crear_sala`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -144,6 +149,11 @@ async function crearSala() {
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
     ganadorMostrado = false;
+
+    const modalFinal = document.getElementById("modalFinal");
+    if (modalFinal) {
+        modalFinal.classList.add("hidden");
+    }
 
     const codigoTexto = document.getElementById("codigoSalaTexto");
     const codigoJuego = document.getElementById("codigoSalaJuego");
@@ -209,6 +219,11 @@ async function unirseSala() {
 
     ganadorMostrado = false;
 
+    const modalFinal = document.getElementById("modalFinal");
+    if (modalFinal) {
+        modalFinal.classList.add("hidden");
+    }
+
     const codigoJuego = document.getElementById("codigoSalaJuego");
     if (codigoJuego) {
         codigoJuego.textContent = idSala;
@@ -220,7 +235,7 @@ async function unirseSala() {
     console.log("Jugador:", jugadorId);
 
     actualizarEstado();
-    
+
     await actualizarEstado();
     iniciarActualizacionEstado();
 }
@@ -353,20 +368,87 @@ function mostrarGanadorEnConsola() {
 }
 
 function verificarFinDelJuego() {
-    if (!estado || !estado.terminado || ganadorMostrado) return;
+  if (!estado || !estado.terminado || ganadorMostrado) return;
 
-    ganadorMostrado = true;
+  ganadorMostrado = true;
 
-    const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
-    const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
+  const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
+  const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
 
-    if (ganadores.length === 1) {
-        alert(`El juego terminó. Ganador: ${ganadores[0].nombre} con ${maxPuntos} puntos.`);
-    } else {
-        alert(
-        `El juego terminó en empate entre: ${ganadores.map(j => j.nombre).join(", ")} con ${maxPuntos} puntos.`
-        );
-    }
+  const resultadoFinalTexto = document.getElementById("resultadoFinalTexto");
+  const resultadoFinalPuntajes = document.getElementById("resultadoFinalPuntajes");
+  const modalFinal = document.getElementById("modalFinal");
+
+  if (!resultadoFinalTexto || !resultadoFinalPuntajes || !modalFinal) return;
+
+  if (ganadores.length === 1) {
+    resultadoFinalTexto.textContent =
+      `Ganador: ${ganadores[0].nombre} con ${maxPuntos} puntos`;
+  } else {
+    resultadoFinalTexto.textContent =
+      `Empate entre ${ganadores.map(j => j.nombre).join(", ")} con ${maxPuntos} puntos`;
+  }
+
+  const jugadoresOrdenados = [...estado.jugadores].sort((a, b) => b.puntos - a.puntos);
+
+  resultadoFinalPuntajes.innerHTML = "";
+
+  jugadoresOrdenados.forEach(jugador => {
+    const fila = document.createElement("div");
+    fila.className = "final-score-row";
+
+    const color = obtenerColorJugador(jugador.id);
+
+    fila.innerHTML = `
+      <div class="final-player">
+        <span class="color-dot" style="background:${color}"></span>
+        <span>${jugador.nombre}</span>
+      </div>
+      <strong>${jugador.puntos} pts</strong>
+    `;
+
+    resultadoFinalPuntajes.appendChild(fila);
+  });
+
+  modalFinal.classList.remove("hidden");
+}
+
+function volverAlMenuDesdeFinal() {
+  const modalFinal = document.getElementById("modalFinal");
+  const codigoCreadoBox = document.getElementById("codigoCreadoBox");
+  const codigoSalaTexto = document.getElementById("codigoSalaTexto");
+  const codigoSalaJuego = document.getElementById("codigoSalaJuego");
+  const turnoActualTexto = document.getElementById("turnoActualTexto");
+  const listaJugadores = document.getElementById("listaJugadores");
+  const mensajeJuego = document.getElementById("mensajeJuego");
+  const idSalaInput = document.getElementById("idSalaInput");
+  const nombreCrear = document.getElementById("nombreCrear");
+  const nombreUnirse = document.getElementById("nombreUnirse");
+  const nombreOculto = document.getElementById("nombre");
+
+  if (intervaloEstado) {
+    clearInterval(intervaloEstado);
+    intervaloEstado = null;
+  }
+
+  if (modalFinal) modalFinal.classList.add("hidden");
+  if (codigoCreadoBox) codigoCreadoBox.classList.add("hidden");
+  if (codigoSalaTexto) codigoSalaTexto.textContent = "------";
+  if (codigoSalaJuego) codigoSalaJuego.textContent = "------";
+  if (turnoActualTexto) turnoActualTexto.textContent = "Esperando...";
+  if (listaJugadores) listaJugadores.innerHTML = "Esperando jugadores...";
+  if (mensajeJuego) mensajeJuego.textContent = "Crea o únete a una sala para comenzar.";
+  if (idSalaInput) idSalaInput.value = "";
+  if (nombreCrear) nombreCrear.value = "";
+  if (nombreUnirse) nombreUnirse.value = "";
+  if (nombreOculto) nombreOculto.value = "";
+
+  idSala = null;
+  jugadorId = null;
+  estado = null;
+  ganadorMostrado = false;
+
+  mostrarPantalla("pantallaMenu");
 }
 
 function dibujar() {

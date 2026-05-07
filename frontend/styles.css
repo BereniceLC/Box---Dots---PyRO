@@ -261,13 +261,24 @@ input:focus {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 760px;
+}
+
+.board-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 canvas {
-  background: #f8fafc;
-  border-radius: 18px;
-  max-width: 100%;
-  height: auto;
+    display: block;
+    margin: 0 auto;
+    background: #051d38;
+    border-radius: 18px;
+    max-width: 100%;
+    height: auto;
 }
 
 @media (max-width: 900px) {
@@ -278,4 +289,65 @@ canvas {
   .hero-card h1 {
     font-size: 38px;
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.72);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  z-index: 999;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  padding: 32px;
+  text-align: center;
+}
+
+.modal-card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 32px;
+}
+
+.modal-card p {
+  color: #cbd5e1;
+  margin-bottom: 20px;
+}
+
+.final-scores {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 28px;
+}
+
+.final-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.final-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
 }
