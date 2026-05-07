@@ -36,7 +36,7 @@ class Sala:
 
             self.jugadores.append(jugador)
 
-            if len(self.jugadores) >= 2:
+            if len(self.jugadores) >= 2 and not self.iniciada:
                 self.iniciada = True
                 self.turno_actual = 0  # asegurar inicio consistente
 

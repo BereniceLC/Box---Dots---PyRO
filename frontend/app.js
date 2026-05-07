@@ -85,10 +85,35 @@ async function unirseSala() {
 async function actualizarEstado() {
     if (!idSala) return;
 
-    const res = await fetch(`${API_URL}/estado/${idSala}`);
-    estado = await res.json();
+    try {
+        const res = await fetch(`${API_URL}/estado/${idSala}`, {
+        cache: "no-store"
+        });
 
-    dibujar();
+        if (!res.ok) {
+        const text = await res.text();
+        console.error("Error obteniendo estado:", text);
+        return;
+        }
+
+        const data = await res.json();
+
+        if (data.ok === false) {
+        console.error("Estado rechazado:", data.error);
+        return;
+        }
+
+        if (!data.tablero) {
+        console.error("Estado sin tablero:", data);
+        return;
+        }
+
+        estado = data;
+        dibujar();
+
+    } catch (error) {
+        console.error("Error de red al actualizar estado:", error);
+    }
 }
 
 function obtenerColorJugador(idJugador) {
@@ -203,7 +228,8 @@ canvas.addEventListener("click", async (e) => {
     }
 
     if (mejor) {
-        await fetch(`${API_URL}/movimiento`, {
+        try {
+            const res = await fetch(`${API_URL}/movimiento`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -213,9 +239,28 @@ canvas.addEventListener("click", async (e) => {
                 fila: mejor.fila,
                 col: mejor.col
             })
-        });
+            });
 
-        actualizarEstado();
+            if (!res.ok) {
+            const text = await res.text();
+            console.error("Error del servidor en movimiento:", text);
+            return;
+            }
+
+            const data = await res.json();
+            console.log("Respuesta movimiento:", data);
+
+            if (!data.ok) {
+            alert(data.error || "Movimiento rechazado");
+            await actualizarEstado();
+            return;
+            }
+
+            await actualizarEstado();
+
+        } catch (error) {
+            console.error("Error de red al enviar movimiento:", error);
+        }
     }
 });
 
