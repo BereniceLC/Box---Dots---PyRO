@@ -14,6 +14,75 @@ const spacing = 60;
 const offset = 50;
 const API_URL = "http://26.2.172.238:5000"; // Cambia esto a tu IP y puerto
 
+function mostrarPantalla(idPantalla) {
+    const pantallas = document.querySelectorAll(".screen");
+
+    pantallas.forEach(pantalla => {
+        pantalla.classList.remove("active");
+    });
+
+    const pantallaActiva = document.getElementById(idPantalla);
+
+    if (pantallaActiva) {
+        pantallaActiva.classList.add("active");
+    }
+    }
+
+    function mostrarCrearSala() {
+    mostrarPantalla("pantallaCrear");
+    }
+
+    function mostrarUnirseSala() {
+    mostrarPantalla("pantallaUnirse");
+    }
+
+    function volverAlMenu() {
+    mostrarPantalla("pantallaMenu");
+    }
+
+    function mostrarJuego() {
+    mostrarPantalla("pantallaJuego");
+    }
+
+    function mostrarMensajeJuego(mensaje) {
+    const contenedor = document.getElementById("mensajeJuego");
+
+    if (contenedor) {
+        contenedor.textContent = mensaje;
+    }
+    }
+
+    async function copiarCodigoSala() {
+    if (!idSala) {
+        mostrarMensajeJuego("No hay código de sala para copiar.");
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(idSala);
+        mostrarMensajeJuego(`Código ${idSala} copiado al portapapeles.`);
+    } catch (error) {
+        mostrarMensajeJuego(`Código de sala: ${idSala}`);
+    }
+}
+
+async function crearSalaDesdeMenu() {
+    const nombreCrear = document.getElementById("nombreCrear").value.trim();
+
+    if (!nombreCrear) {
+        alert("Escribe tu nombre antes de crear una sala.");
+        return;
+    }
+
+    const nombreOculto = document.getElementById("nombre");
+
+    if (nombreOculto) {
+        nombreOculto.value = nombreCrear;
+    }
+
+    await crearSala();
+}
+
 async function crearSala() {
     const nombre = document.getElementById("nombre").value;
 
@@ -33,7 +102,23 @@ async function crearSala() {
 
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
-    
+
+    const codigoTexto = document.getElementById("codigoSalaTexto");
+    const codigoJuego = document.getElementById("codigoSalaJuego");
+    const codigoBox = document.getElementById("codigoCreadoBox");
+    const inputSala = document.getElementById("idSalaInput");
+
+    if (codigoTexto) codigoTexto.textContent = idSala;
+    if (codigoJuego) codigoJuego.textContent = idSala;
+    if (inputSala) inputSala.value = idSala;
+    if (codigoBox) codigoBox.classList.remove("hidden");
+
+    mostrarJuego();
+    mostrarMensajeJuego(`Sala creada. Comparte el código ${idSala} con los demás jugadores.`);
+
+    await actualizarEstado();
+    iniciarActualizacionEstado();
+
     const inputSala = document.getElementById("idSalaInput");
         if (inputSala) {
             inputSala.value = idSala;
@@ -49,7 +134,15 @@ async function crearSala() {
 }
 
 async function unirseSala() {
-    const nombre = document.getElementById("nombre").value.trim();
+    const nombreInputUnirse = document.getElementById("nombreUnirse");
+    const nombreInputNormal = document.getElementById("nombre");
+
+    const nombre = (
+    nombreInputUnirse?.value ||
+    nombreInputNormal?.value ||
+    ""
+    ).trim();
+
     const id = document.getElementById("idSalaInput").value.trim().toUpperCase();
 
     if (!nombre) {
@@ -82,7 +175,16 @@ async function unirseSala() {
 
     idSala = id;
     jugadorId = data.jugador.id;
+
     ganadorMostrado = false;
+
+    const codigoJuego = document.getElementById("codigoSalaJuego");
+    if (codigoJuego) {
+        codigoJuego.textContent = idSala;
+    }
+    mostrarJuego();
+    mostrarMensajeJuego(`Has unido a la sala ${idSala}.Esperando turno...`);
+
     console.log("Unido a sala:", idSala);
     console.log("Jugador:", jugadorId);
 
