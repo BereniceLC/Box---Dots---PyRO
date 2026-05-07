@@ -52,7 +52,7 @@ function mostrarPantalla(idPantalla) {
     }
     }
 
-    async function copiarCodigoSala() {
+async function copiarCodigoSala() {
     if (!idSala) {
         mostrarMensajeJuego("No hay código de sala para copiar.");
         return;
@@ -63,6 +63,42 @@ function mostrarPantalla(idPantalla) {
         mostrarMensajeJuego(`Código ${idSala} copiado al portapapeles.`);
     } catch (error) {
         mostrarMensajeJuego(`Código de sala: ${idSala}`);
+    }
+}
+
+function actualizarPanelJuego() {
+    if (!estado || !estado.jugadores) return;
+
+    const turnoTexto = document.getElementById("turnoActualTexto");
+    const listaJugadores = document.getElementById("listaJugadores");
+
+    const jugadorTurno = estado.jugadores.find(j => j.id === estado.turno);
+
+    if (turnoTexto) {
+        turnoTexto.textContent = jugadorTurno
+        ? jugadorTurno.nombre
+        : "Esperando...";
+    }
+
+    if (listaJugadores) {
+        listaJugadores.innerHTML = "";
+
+        estado.jugadores.forEach(jugador => {
+        const fila = document.createElement("div");
+        fila.className = "player-row";
+
+        const color = obtenerColorJugador(jugador.id);
+
+        fila.innerHTML = `
+            <div class="player-name">
+            <span class="color-dot" style="background:${color}"></span>
+            <strong>${jugador.nombre}</strong>
+            </div>
+            <span>${jugador.puntos} pts</span>
+        `;
+
+        listaJugadores.appendChild(fila);
+        });
     }
 }
 
@@ -223,6 +259,7 @@ async function actualizarEstado() {
 
         estado = data;
         dibujar();
+        actualizarPanelJuego();
         mostrarMarcadorEnConsola();
         verificarFinDelJuego();
 
