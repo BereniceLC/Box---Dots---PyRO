@@ -5,6 +5,11 @@ let idSala = null;
 let jugadorId = null;
 let estado = null;
 
+let intervaloEstado = null;
+let actualizandoEstado = false;
+
+let ganadorMostrado = false;
+
 const spacing = 60;
 const offset = 50;
 const API_URL = "http://26.2.172.238:5000"; // Cambia esto a tu IP y puerto
@@ -28,7 +33,7 @@ async function crearSala() {
 
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
-
+    ganadorMostrado = false;
     console.log("Sala creada:", data);
 
     actualizarEstado();
@@ -71,7 +76,7 @@ async function unirseSala() {
 
     idSala = id;
     jugadorId = data.jugador.id;
-
+    ganadorMostrado = false;
     console.log("Unido a sala:", idSala);
     console.log("Jugador:", jugadorId);
 
@@ -110,6 +115,8 @@ async function actualizarEstado() {
 
         estado = data;
         dibujar();
+        mostrarMarcadorEnConsola();
+        verificarFinDelJuego();
 
     } catch (error) {
         console.error("Error de red al actualizar estado:", error);
@@ -137,12 +144,123 @@ function obtenerColorJugador(idJugador) {
   return colores[jugador.color] || jugador.color || "white";
 }
 
+function obtenerNombreJugador(idJugador) {
+    if (!estado || !estado.jugadores) return "Desconocido";
+
+    const jugador = estado.jugadores.find(j => j.id === idJugador);
+    return jugador ? jugador.nombre : "Desconocido";
+    }
+
+function obtenerJugadorPorId(idJugador) {
+    if (!estado || !estado.jugadores) return null;
+    return estado.jugadores.find(j => j.id === idJugador) || null;
+    }
+
+    function mostrarMarcadorEnConsola() {
+    if (!estado || !estado.jugadores) return;
+
+    console.clear();
+
+    console.log("Sala:", estado.id_sala);
+    console.log("Juego iniciado:", estado.iniciada);
+    console.log("Juego terminado:", estado.terminado);
+
+    const jugadorTurno = obtenerJugadorPorId(estado.turno);
+
+    if (jugadorTurno) {
+        console.log("Turno actual:", jugadorTurno.nombre, "| Color:", jugadorTurno.color);
+    }
+
+    console.table(
+        estado.jugadores.map(j => ({
+        nombre: j.nombre,
+        color: j.color,
+        puntos: j.puntos,
+        esMiJugador: j.id === jugadorId,
+        tieneTurno: j.id === estado.turno
+        }))
+    );
+
+    if (estado.terminado) {
+        mostrarGanadorEnConsola();
+    }
+}
+
+function mostrarGanadorEnConsola() {
+    if (!estado || !estado.jugadores || estado.jugadores.length === 0) return;
+
+    const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
+    const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
+
+    if (ganadores.length === 1) {
+        console.log("GANADOR:", ganadores[0].nombre, "con", maxPuntos, "puntos");
+    } else {
+        console.log(
+        "EMPATE:",
+        ganadores.map(j => j.nombre).join(", "),
+        "con",
+        maxPuntos,
+        "puntos"
+        );
+    }
+}
+
+function verificarFinDelJuego() {
+    if (!estado || !estado.terminado || ganadorMostrado) return;
+
+    ganadorMostrado = true;
+
+    const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
+    const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
+
+    if (ganadores.length === 1) {
+        alert(`El juego terminó. Ganador: ${ganadores[0].nombre} con ${maxPuntos} puntos.`);
+    } else {
+        alert(
+        `El juego terminó en empate entre: ${ganadores.map(j => j.nombre).join(", ")} con ${maxPuntos} puntos.`
+        );
+    }
+}
+
 function dibujar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!estado) return;
 
     const { horizontal, vertical, boxes } = estado.tablero;
+    
+    // Dibujar cuadros ganados
+    boxes.forEach((fila, i) => {
+    fila.forEach((dueno, j) => {
+        if (dueno) {
+        ctx.fillStyle = obtenerColorJugador(dueno);
+        ctx.globalAlpha = 0.25;
+
+        ctx.fillRect(
+            offset + j * spacing + 5,
+            offset + i * spacing + 5,
+            spacing - 10,
+            spacing - 10
+        );
+
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "white";
+        ctx.font = "16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const nombre = obtenerNombreJugador(dueno);
+        const inicial = nombre.charAt(0).toUpperCase();
+
+        ctx.fillText(
+            inicial,
+            offset + j * spacing + spacing / 2,
+            offset + i * spacing + spacing / 2
+        );
+        }
+    });
+    });
 
     // Dibujar puntos
     for (let i = 0; i < 6; i++) {
@@ -155,8 +273,8 @@ function dibujar() {
     }
 
     // Dibujar líneas horizontales
-horizontal.forEach((fila, i) => {
-  fila.forEach((linea, j) => {
+    horizontal.forEach((fila, i) => {
+    fila.forEach((linea, j) => {
     if (linea) {
       ctx.strokeStyle = obtenerColorJugador(linea);
       ctx.lineWidth = 4;
