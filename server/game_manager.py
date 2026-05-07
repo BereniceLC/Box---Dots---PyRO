@@ -1,4 +1,5 @@
-import uuid
+import secrets 
+import string
 import Pyro5.api
 
 from sala import Sala
@@ -8,18 +9,26 @@ from sala import Sala
 class GameManager:
     def __init__(self):
         self.salas = {}
+    def generar_codigo_sala(self):
+        caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
+        while True:
+         codigo = "".join(secrets.choice(caracteres) for _ in range(6))
+
+         if codigo not in self.salas:
+            return codigo
+         
     # -------------------------------
     # CREAR SALA
     # -------------------------------
     def crear_sala(self, nombre_jugador):
-        id_sala = str(uuid.uuid4())
+        id_sala = self.generar_codigo_sala()
 
         sala = Sala(id_sala)
-        self.salas[id_sala] = sala
 
         resultado = sala.agregar_jugador(nombre_jugador)
 
+        self.salas[id_sala] = sala
         return {
             "ok": True,
             "id_sala": id_sala,  #  cambiado (ANTES id_sala)
