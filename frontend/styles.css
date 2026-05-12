@@ -351,3 +351,7 @@ canvas {
   display: flex;
   justify-content: center;
 }
+
+.modal-overlay.hidden {
+  display: none;
+}
