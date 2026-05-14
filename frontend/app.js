@@ -10,7 +10,7 @@ let actualizandoEstado = false;
 
 let ganadorMostrado = false;
 
-let resultadGlobalRegistrado = false;
+let resultadoGlobalRegistrado = false;
 
 const spacing = 60;
 const offset = 50;
@@ -625,8 +625,11 @@ function dibujar() {
     });
 
     // Dibujar puntos
-    for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
+
+    const filasPuntos =horizontal.length;
+    const columnasPuntos = horizontal[0].length + 1;
+    for (let i = 0; i < filasPuntos; i++) {
+        for (let j = 0; j < columnasPuntos; j++) {
             ctx.beginPath();
             ctx.arc(offset + j * spacing, offset + i * spacing, 5, 0, Math.PI * 2);
             ctx.fillStyle = "white";
@@ -665,82 +668,99 @@ vertical.forEach((fila, i) => {
 
 // Detectar clics
 canvas.addEventListener("click", async (e) => {
-    if (!estado) return;
+    if (!estado || !estado.tablero) return;
 
     const x = e.offsetX;
     const y = e.offsetY;
 
+    const { horizontal, vertical } = estado.tablero;
+
     let mejor = null;
     let minDist = 15;
 
-    // Buscar línea horizontal más cercana
-    for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 7; j++) {
-            let x1 = offset + j * spacing;
-            let y1 = offset + i * spacing;
-            let x2 = offset + (j + 1) * spacing;
-            let y2 = y1;
+    // Buscar línea horizontal más cercana usando el tamaño real del tablero
+    for (let i = 0; i < horizontal.length; i++) {
+      for (let j = 0; j < horizontal[i].length; j++) {
+        // Si la línea ya está ocupada, la ignoramos
+        if (horizontal[i][j]) continue;
 
-            let dist = distanciaLinea(x, y, x1, y1, x2, y2);
+        const x1 = offset + j * spacing;
+        const y1 = offset + i * spacing;
+        const x2 = offset + (j + 1) * spacing;
+        const y2 = y1;
 
-            if (dist < minDist) {
-                minDist = dist;
-                mejor = { tipo: "H", fila: i, col: j };
-            }
+        const dist = distanciaLinea(x, y, x1, y1, x2, y2);
+
+        if (dist < minDist) {
+          minDist = dist;
+          mejor = {
+            tipo: "H",
+            fila: i,
+            col: j
+          };
         }
+      }
     }
 
-    // Buscar línea vertical
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 8; j++) {
-            let x1 = offset + j * spacing;
-            let y1 = offset + i * spacing;
-            let x2 = x1;
-            let y2 = offset + (i + 1) * spacing;
+    // Buscar línea vertical más cercana usando el tamaño real del tablero
+    for (let i = 0; i < vertical.length; i++) {
+      for (let j = 0; j < vertical[i].length; j++) {
+        // Si la línea ya está ocupada, la ignoramos
+        if (vertical[i][j]) continue;
 
-            let dist = distanciaLinea(x, y, x1, y1, x2, y2);
+        const x1 = offset + j * spacing;
+        const y1 = offset + i * spacing;
+        const x2 = x1;
+        const y2 = offset + (i + 1) * spacing;
 
-            if (dist < minDist) {
-                minDist = dist;
-                mejor = { tipo: "V", fila: i, col: j };
-            }
+        const dist = distanciaLinea(x, y, x1, y1, x2, y2);
+
+        if (dist < minDist) {
+          minDist = dist;
+          mejor = {
+            tipo: "V",
+            fila: i,
+            col: j
+          };
         }
+      }
     }
 
-    if (mejor) {
-        try {
-            const res = await fetch(`${API_URL}/movimiento`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                id_sala: idSala,
-                jugador_id: jugadorId,
-                tipo: mejor.tipo,
-                fila: mejor.fila,
-                col: mejor.col
-            })
-            });
+    if (!mejor) return;
 
-            if (!res.ok) {
-            const text = await res.text();
-            console.error("Error del servidor en movimiento:", text);
-            return;
-            }
+    try {
+      const res = await fetch(`${API_URL}/movimiento`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          id_sala: idSala,
+          jugador_id: jugadorId,
+          tipo: mejor.tipo,
+          fila: mejor.fila,
+          col: mejor.col
+        })
+      });
 
-            const data = await res.json();
-            console.log("Respuesta movimiento:", data);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Error del servidor en movimiento:", text);
+        return;
+      }
 
-            if (!data.ok) {
-            alert(data.error || "Movimiento rechazado");
-            await actualizarEstado();
-            return;
-            }
+      const data = await res.json();
 
-            await actualizarEstado();
+      console.log("Respuesta movimiento:", data);
 
-        } catch (error) {
-            console.error("Error de red al enviar movimiento:", error);
-        }
+      if (!data.ok) {
+        alert(data.error || "Movimiento rechazado");
+        await actualizarEstado();
+        return;
+      }
+
+      await actualizarEstado();
+
+    } catch (error) {
+      console.error("Error de red al enviar movimiento:", error);
     }
 });
 
