@@ -58,7 +58,10 @@ def autenticar_o_registrar(username, password):
         password_hash = usuario.get("password_hash")
 
         if not check_password_hash(password_hash, password):
-            return {"ok": False, "error": "Contraseña incorrecta para ese usuario"}
+            return {""
+            "ok": False,
+            "error": "Ese nombre de usuario ya existe.Usa la contraseña correcta o elige otro usuario"
+            }
 
         usuarios.update_one(
             {"username_lower": username_lower},

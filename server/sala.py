@@ -21,6 +21,14 @@ class Sala:
     # -------------------------------
     def agregar_jugador(self, nombre):
         with self.lock:
+            nombre = (nombre or "").strip()
+
+            if not nombre:
+                return {"ok": False, "error": "Nombre de jugador inválido"}
+
+            if any(j["nombre"].strip().lower() == nombre.lower() for j in self.jugadores):
+                return {"ok": False, "error": "Ese usuario ya está dentro de la sala"}
+
             if len(self.jugadores) >= 4:
                 return {"ok": False, "error": "Sala llena"}
 
@@ -38,7 +46,7 @@ class Sala:
 
             if len(self.jugadores) >= 2 and not self.iniciada:
                 self.iniciada = True
-                self.turno_actual = 0  # asegurar inicio consistente
+                self.turno_actual = 0
 
             return {
                 "ok": True,
