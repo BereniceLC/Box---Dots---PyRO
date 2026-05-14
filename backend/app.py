@@ -3,6 +3,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pyro_client import PyroClient
 
+from mongo_store import (
+    inicializar_indices,
+    autenticar_o_registrar,
+    obtener_leaderboard,
+    registrar_resultado_partida
+)
+
 app = Flask(__name__)
 
 # CORS correcto (no duplicado)
@@ -10,6 +17,12 @@ CORS(app)
 
 # Cliente PyRO
 pyro = PyroClient()
+
+try:
+    inicializar_indices()
+    print("[MongoDB] Índices inicializados correctamente")
+except Exception as e:
+    print("[MongoDB] No se pudieron inicializar los índices:", e)
 
 
 @app.route("/")
@@ -98,6 +111,67 @@ def movimiento():
         print(f"[ERROR movimiento] tardó {fin - inicio:.3f} segundos")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/auth", methods=["POST"])
+def auth():
+    try:
+        data = request.get_json() or {}
+
+        username = data.get("username", "")
+        password = data.get("password", "")
+
+        resultado = autenticar_o_registrar(username, password)
+
+        status = 200 if resultado.get("ok") else 400
+        return jsonify(resultado), status
+
+    except Exception as e:
+        print("ERROR auth:", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/leaderboard", methods=["GET"])
+def leaderboard():
+    try:
+        limit = int(request.args.get("limit", 10))
+        datos = obtener_leaderboard(limit)
+
+        return jsonify({
+            "ok": True,
+            "leaderboard": datos
+        })
+
+    except Exception as e:
+        print("ERROR leaderboard:", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/registrar_resultado", methods=["POST"])
+def registrar_resultado():
+    try:
+        data = request.get_json() or {}
+        id_sala = data.get("id_sala")
+
+        if not id_sala:
+            return jsonify({"ok": False, "error": "Falta id_sala"}), 400
+
+        estado = pyro.obtener_estado(id_sala)
+
+        if not estado.get("terminado"):
+            return jsonify({
+                "ok": False,
+                "error": "La partida todavía no ha terminado"
+            }), 400
+
+        jugadores = estado.get("jugadores", [])
+
+        resultado = registrar_resultado_partida(id_sala, jugadores)
+
+        status = 200 if resultado.get("ok") else 400
+        return jsonify(resultado), status
+
+    except Exception as e:
+        print("ERROR registrar_resultado:", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

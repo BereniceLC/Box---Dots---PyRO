@@ -355,3 +355,41 @@ canvas {
 .modal-overlay.hidden {
   display: none;
 }
+
+.leaderboard-box {
+  margin-top: 28px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  text-align: left;
+}
+
+.leaderboard-box h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 10px;
+  color: #e2e8f0;
+}
+
+.leaderboard-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.leaderboard-row small {
+  display: block;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-size: 12px;
+}

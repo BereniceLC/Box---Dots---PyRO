@@ -26,6 +26,18 @@
             Unirse a sala
           </button>
         </div>
+
+        <div class="leaderboard-box">
+          <h3>Mejores puntuaciones</h3>
+
+          <div id="leaderboardLista" class="leaderboard-list">
+            Cargando ranking...
+          </div>
+
+          <button class="btn small" onclick="cargarLeaderboard()">
+            Actualizar ranking
+          </button>
+        </div>
       </div>
     </section>
 
@@ -41,6 +53,9 @@
 
         <label for="nombreCrear">Tu nombre</label>
         <input id="nombreCrear" type="text" placeholder="Ej. Alejandro">
+
+        <label for="passwordCrear"> Contraseña </label>
+        <input id="passwordCrear" type="password" placeholder="Minimo 4 caracteres">
 
         <button class="btn primary full" onclick="crearSalaDesdeMenu()">
           Crear sala
@@ -73,6 +88,9 @@
 
         <label for="nombreUnirse">Tu nombre</label>
         <input id="nombreUnirse" type="text" placeholder="Ej. Ingrid">
+
+        <label for="passwordUnirse"> Contraseña </label>
+        <input id="passwordUnirse" type="password" placeholder="Tu contraseña">
 
         <label for="idSalaInput">Código de sala</label>
         <input

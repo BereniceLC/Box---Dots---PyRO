@@ -1,5 +1,5 @@
 class Tablero:
-    def __init__(self, filas=6, columnas=8):
+    def __init__(self, filas=9, columnas=9):
         self.filas = filas
         self.columnas = columnas
 

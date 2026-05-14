@@ -10,6 +10,8 @@ let actualizandoEstado = false;
 
 let ganadorMostrado = false;
 
+let resultadGlobalRegistrado = false;
+
 const spacing = 60;
 const offset = 50;
 const API_URL = "http://26.2.172.238:5000"; // Cambia esto a tu IP y puerto
@@ -66,6 +68,103 @@ async function copiarCodigoSala() {
     }
 }
 
+async function autenticarUsuario(username, password) {
+  const res = await fetch(`${API_URL}/auth`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      username,
+      password
+    })
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    throw new Error(data.error || "No se pudo autenticar el usuario");
+  }
+
+  return data.usuario;
+}
+
+
+async function cargarLeaderboard() {
+  const contenedor = document.getElementById("leaderboardLista");
+
+  if (contenedor) {
+    contenedor.textContent = "Cargando ranking...";
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/leaderboard?limit=10`, {
+      cache: "no-store"
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || "No se pudo cargar el ranking");
+    }
+
+    if (!contenedor) return;
+
+    if (data.leaderboard.length === 0) {
+      contenedor.textContent = "Aún no hay puntuaciones.";
+      return;
+    }
+
+    contenedor.innerHTML = "";
+
+    data.leaderboard.forEach((jugador, index) => {
+      const fila = document.createElement("div");
+      fila.className = "leaderboard-row";
+
+      fila.innerHTML = `
+        <div>
+          <strong>${index + 1}. ${jugador.username}</strong>
+          <small>${jugador.games_played} partidas | ${jugador.wins} victorias</small>
+        </div>
+        <strong>${jugador.total_points} pts</strong>
+      `;
+
+      contenedor.appendChild(fila);
+    });
+
+  } catch (error) {
+    console.error("Error leaderboard:", error);
+
+    if (contenedor) {
+      contenedor.textContent = "No se pudo cargar el ranking.";
+    }
+  }
+}
+
+
+async function registrarResultadoGlobal() {
+  if (!idSala || resultadoGlobalRegistrado) return;
+
+  resultadoGlobalRegistrado = true;
+
+  try {
+    const res = await fetch(`${API_URL}/registrar_resultado`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id_sala: idSala
+      })
+    });
+
+    const data = await res.json();
+
+    console.log("Resultado global registrado:", data);
+
+    await cargarLeaderboard();
+
+  } catch (error) {
+    console.error("Error registrando resultado global:", error);
+  }
+}
+
 function actualizarPanelJuego() {
     if (!estado || !estado.jugadores) return;
 
@@ -103,20 +202,35 @@ function actualizarPanelJuego() {
 }
 
 async function crearSalaDesdeMenu() {
-    const nombreCrear = document.getElementById("nombreCrear").value.trim();
+  const nombreCrear = document.getElementById("nombreCrear").value.trim();
+  const passwordCrear = document.getElementById("passwordCrear").value.trim();
 
-    if (!nombreCrear) {
-        alert("Escribe tu nombre antes de crear una sala.");
-        return;
-    }
+  if (!nombreCrear) {
+    alert("Escribe tu usuario antes de crear una sala.");
+    return;
+  }
+
+  if (!passwordCrear) {
+    alert("Escribe tu contraseña.");
+    return;
+  }
+
+  try {
+    const usuario = await autenticarUsuario(nombreCrear, passwordCrear);
 
     const nombreOculto = document.getElementById("nombre");
 
     if (nombreOculto) {
-        nombreOculto.value = nombreCrear;
+      nombreOculto.value = usuario.username;
     }
 
+    resultadoGlobalRegistrado = false;
+
     await crearSala();
+
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 async function crearSala() {
@@ -149,6 +263,7 @@ async function crearSala() {
     idSala = data.id_sala;
     jugadorId = data.jugador.id;
     ganadorMostrado = false;
+    resultadoGlobalRegistrado = false;
 
     const modalFinal = document.getElementById("modalFinal");
     if (modalFinal) {
@@ -178,7 +293,7 @@ async function unirseSala() {
     const nombreInputUnirse = document.getElementById("nombreUnirse");
     const nombreInputNormal = document.getElementById("nombre");
 
-    const nombre = (
+    let nombre = (
     nombreInputUnirse?.value ||
     nombreInputNormal?.value ||
     ""
@@ -194,6 +309,21 @@ async function unirseSala() {
     if (!id) {
         alert("Escribe el ID de la sala.");
         return;
+    }
+
+    const passwordUnirse = document.getElementById("passwordUnirse").value.trim();
+
+    if (!passwordUnirse) {
+    alert("Escribe tu contraseña.");
+    return;
+    }
+
+    try {
+    const usuario = await autenticarUsuario(nombre, passwordUnirse);
+    nombre = usuario.username;
+    } catch (error) {
+    alert(error.message);
+    return;
     }
 
     const res = await fetch(`${API_URL}/unirse_sala`, {
@@ -218,6 +348,7 @@ async function unirseSala() {
     jugadorId = data.jugador.id;
 
     ganadorMostrado = false;
+    resultadoGlobalRegistrado = false;
 
     const modalFinal = document.getElementById("modalFinal");
     if (modalFinal) {
@@ -411,6 +542,7 @@ function verificarFinDelJuego() {
   });
 
   modalFinal.classList.remove("hidden");
+  registrarResultadoGlobal();
 }
 
 function volverAlMenuDesdeFinal() {
@@ -447,6 +579,7 @@ function volverAlMenuDesdeFinal() {
   jugadorId = null;
   estado = null;
   ganadorMostrado = false;
+  resultadoGlobalRegistrado = false;
 
   mostrarPantalla("pantallaMenu");
 }
@@ -492,8 +625,8 @@ function dibujar() {
     });
 
     // Dibujar puntos
-    for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 8; j++) {
+    for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
             ctx.beginPath();
             ctx.arc(offset + j * spacing, offset + i * spacing, 5, 0, Math.PI * 2);
             ctx.fillStyle = "white";
@@ -639,3 +772,7 @@ function distanciaLinea(px, py, x1, y1, x2, y2) {
 
     return Math.sqrt(dx * dx + dy * dy);
 }
+
+window.addEventListener("load", () => {
+    cargarLeaderboard();
+});
