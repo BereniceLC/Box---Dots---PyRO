@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyro-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyro-server
+  template:
+    metadata:
+      labels:
+        app: pyro-server
+    spec:
+      containers:
+        - name: pyro-server
+          image: boxdots-python:latest
+          imagePullPolicy: Never
+          workingDir: /app/server
+          command: ["python", "-u", "main_server.py"]
+          env:
+            - name: APP_PYRO_NS_HOST
+              value: "pyro-ns"
+            - name: APP_PYRO_NS_PORT
+              value: "9090"
+            - name: APP_PYRO_HOST
+              value: "pyro-server"
+            - name: APP_PYRO_PORT
+              value: "50010"
+          ports:
+            - containerPort: 50010
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyro-server
+spec:
+  selector:
+    app: pyro-server
+  ports:
+    - port: 50010
+      targetPort: 50010

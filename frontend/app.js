@@ -14,7 +14,8 @@ let resultadoGlobalRegistrado = false;
 
 const spacing = 60;
 const offset = 50;
-const API_URL = `http://${window.location.hostname}:5000`; // Cambia el puerto si tu backend usa otro
+const API_PORT = window.location.port === "30080" ? "30050" : "5000";
+const API_URL = `http://${window.location.hostname}:${API_PORT}`;
 
 function mostrarPantalla(idPantalla) {
     const pantallas = document.querySelectorAll(".screen");

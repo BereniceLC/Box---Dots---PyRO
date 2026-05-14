@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyro-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyro-ns
+  template:
+    metadata:
+      labels:
+        app: pyro-ns
+    spec:
+      containers:
+        - name: pyro-ns
+          image: boxdots-python:latest
+          imagePullPolicy: Never
+          command: ["python", "-m", "Pyro5.nameserver", "-n", "0.0.0.0", "-p", "9090"]
+          ports:
+            - containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyro-ns
+spec:
+  selector:
+    app: pyro-ns
+  ports:
+    - port: 9090
+      targetPort: 9090
