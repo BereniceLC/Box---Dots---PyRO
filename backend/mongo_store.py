@@ -4,9 +4,10 @@ from pymongo import MongoClient, DESCENDING, ASCENDING
 from pymongo.errors import DuplicateKeyError
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import os
 
-MONGO_URI = "mongodb://127.0.0.1:27017"
-MONGO_DB = "boxdots_pyro"
+MONGO_URI = os.getenv("MONGO_URI") or "mongodb://127.0.0.1:27017"
+MONGO_DB = os.getenv("MONGO_DB") or "boxdots_pyro"
 
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
 db = client[MONGO_DB]
@@ -21,7 +22,6 @@ def ahora():
 
 def inicializar_indices():
     usuarios.create_index("username_lower", unique=True)
-    partidas.create_index("_id", unique=True)
 
 
 def limpiar_username(username):

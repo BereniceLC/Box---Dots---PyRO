@@ -1,0 +1,63 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: dots_mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  pyro-ns:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: dots_pyro_ns
+    command: python -m Pyro5.nameserver -n 0.0.0.0 -p 9090
+
+  pyro-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: dots_pyro_server
+    hostname: pyro-server
+    working_dir: /app/server
+    environment:
+      APP_PYRO_NS_HOST: pyro-ns
+      APP_PYRO_NS_PORT: 9090
+      APP_PYRO_HOST: pyro-server
+      APP_PYRO_PORT: 50010
+    command: python main_server.py
+    depends_on:
+      - pyro-ns
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: dots_backend
+    working_dir: /app/backend
+    environment:
+      APP_PYRO_NS_HOST: pyro-ns
+      APP_PYRO_NS_PORT: 9090
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: boxdots_pyro
+    ports:
+      - "5000:5000"
+    command: python app.py
+    depends_on:
+      - mongo
+      - pyro-server
+
+  frontend:
+    image: nginx:alpine
+    container_name: dots_frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

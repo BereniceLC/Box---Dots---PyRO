@@ -14,7 +14,7 @@ let resultadoGlobalRegistrado = false;
 
 const spacing = 60;
 const offset = 50;
-const API_URL = "http://26.2.172.238:5000"; // Cambia esto a tu IP y puerto
+const API_URL = `http://${window.location.hostname}:5000`; // Cambia el puerto si tu backend usa otro
 
 function mostrarPantalla(idPantalla) {
     const pantallas = document.querySelectorAll(".screen");

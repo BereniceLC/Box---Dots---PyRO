@@ -1,3 +1,5 @@
+import os
+import time
 import threading
 import Pyro5.api
 
@@ -7,18 +9,45 @@ class PyroClient:
         self.uri = None
         self.lock = threading.Lock()
 
+        self.ns_host = os.getenv("APP_PYRO_NS_HOST", "127.0.0.1")
+        self.ns_port = int(os.getenv("APP_PYRO_NS_PORT", "9090"))
+
+    def _localizar_nameserver(self):
+        for intento in range(20):
+            try:
+                print(f"[PyroClient] Buscando Name Server en {self.ns_host}:{self.ns_port}...")
+                return Pyro5.api.locate_ns(
+                    host=self.ns_host,
+                    port=self.ns_port
+                )
+            except Exception as e:
+                print(f"[PyroClient] Name Server no disponible. Intento {intento + 1}/20:", e)
+                time.sleep(1)
+
+        raise RuntimeError("No se pudo conectar al Name Server de Pyro")
+
     def _resolver_uri(self):
         if self.uri is not None:
             return self.uri
 
         with self.lock:
-            if self.uri is None:
-                print("[PyroClient] Buscando Name Server...")
-                ns = Pyro5.api.locate_ns(host="127.0.0.1")
-                self.uri = ns.lookup("game.manager")
-                print("[PyroClient] URI encontrada:", self.uri)
+            if self.uri is not None:
+                return self.uri
 
-        return self.uri
+            ns = self._localizar_nameserver()
+
+            for intento in range(30):
+                try:
+                    print(f"[PyroClient] Buscando objeto game.manager. Intento {intento + 1}/30...")
+                    self.uri = ns.lookup("game.manager")
+                    print("[PyroClient] URI encontrada:", self.uri)
+                    return self.uri
+
+                except Exception as e:
+                    print(f"[PyroClient] game.manager aún no disponible:", e)
+                    time.sleep(1)
+
+            raise RuntimeError("No se encontró el objeto Pyro game.manager")
 
     def _llamar(self, metodo, *args):
         try:
