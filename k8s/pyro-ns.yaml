@@ -12,6 +12,7 @@ spec:
       labels:
         app: pyro-ns
     spec:
+      enableServiceLinks: false
       containers:
         - name: pyro-ns
           image: boxdots-python:latest
@@ -28,5 +29,6 @@ spec:
   selector:
     app: pyro-ns
   ports:
-    - port: 9090
+    - name: pyro-ns-port
+      port: 9090
       targetPort: 9090

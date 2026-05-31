@@ -12,6 +12,7 @@ spec:
       labels:
         app: backend
     spec:
+      enableServiceLinks: false
       containers:
         - name: backend
           image: boxdots-python:latest
