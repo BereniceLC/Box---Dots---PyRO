@@ -87,3 +87,10 @@ class PyroClient:
             fila,
             col
         )
+    
+    def salir_sala(self, id_sala, jugador_id):
+        return self._llamar(
+            "salir_sala",
+            id_sala,
+            jugador_id
+        )

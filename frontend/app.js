@@ -193,6 +193,12 @@ async function cargarLeaderboard() {
 async function registrarResultadoGlobal() {
   if (!idSala || resultadoGlobalRegistrado) return;
 
+  if (estado && estado.registrar_resultado_global === false) {
+    resultadoGlobalRegistrado = true;
+    console.log("Partida por abandono: no se registra resultado global.");
+    return;
+  }
+
   resultadoGlobalRegistrado = true;
 
   try {
@@ -358,7 +364,7 @@ function actualizarPanelJuego() {
 
           <div>
             <strong>${escaparHTML(jugador.nombre)}</strong>
-            ${esJugadorActual ? `<small>T\u00fa</small>` : ""}
+            ${jugador.abandono ? `<small>AbandonÃ³</small>` : esJugadorActual ? `<small>T\u00fa</small>` : ""}
           </div>
         </div>
 
@@ -393,7 +399,7 @@ function actualizarPanelJuego() {
         <span class="turn-chip-info">
           <strong>${escaparHTML(jugador.nombre)}</strong>
           <small>
-            ${jugador.puntos} pts${esJugadorActual ? " · T\u00fa" : ""}
+            ${jugador.puntos} pts${jugador.abandono ? " · Salió" : esJugadorActual ? " · T\u00fa" : ""}
           </small>
         </span>
       `;
@@ -724,14 +730,46 @@ function verificarFinDelJuego() {
 
   ganadorMostrado = true;
 
-  const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
-  const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
-
   const resultadoFinalTexto = document.getElementById("resultadoFinalTexto");
   const resultadoFinalPuntajes = document.getElementById("resultadoFinalPuntajes");
   const modalFinal = document.getElementById("modalFinal");
 
   if (!resultadoFinalTexto || !resultadoFinalPuntajes || !modalFinal) return;
+
+  if (estado.motivo_final === "abandono") {
+    const ganadorAbandono = estado.ganador_abandono;
+
+    resultadoFinalTexto.textContent = ganadorAbandono
+      ? `Ganador por abandono: ${ganadorAbandono.nombre}`
+      : "La partida terminó por abandono";
+
+    resultadoFinalPuntajes.innerHTML = "";
+
+    estado.jugadores.forEach(jugador => {
+      const fila = document.createElement("div");
+      fila.className = "final-score-row";
+
+      const color = obtenerColorJugador(jugador.id);
+      const estadoJugador = jugador.abandono ? "Abandonó" : "Activo";
+
+      fila.innerHTML = `
+        <div class="final-player">
+          <span class="color-dot" style="background:${color}"></span>
+          <span>${escaparHTML(jugador.nombre)} - ${estadoJugador}</span>
+        </div>
+        <strong>${jugador.puntos} pts</strong>
+      `;
+
+      resultadoFinalPuntajes.appendChild(fila);
+    });
+
+    modalFinal.classList.remove("hidden");
+    registrarResultadoGlobal();
+    return;
+  }
+
+  const maxPuntos = Math.max(...estado.jugadores.map(j => j.puntos));
+  const ganadores = estado.jugadores.filter(j => j.puntos === maxPuntos);
 
   if (ganadores.length === 1) {
     resultadoFinalTexto.textContent =
@@ -766,15 +804,44 @@ function verificarFinDelJuego() {
   registrarResultadoGlobal();
 }
 
-function salirPartidaLocal() {
+async function salirPartidaLocal() {
+  if (!idSala || !jugadorId) {
+    volverAlMenuDesdeFinal();
+    return;
+  }
+
   const confirmar = confirm(
-    "¿Quieres salir de la partida?\n\nPor ahora saldrás de la pantalla localmente. La sala seguirá existiendo para los demás jugadores."
+    "¿Quieres salir de la partida?\n\nSi la partida ya inició, el jugador restante ganará por abandono, pero no se sumarán puntos al ranking."
   );
 
   if (!confirmar) return;
 
-  volverAlMenuDesdeFinal();
-  cargarLeaderboard();
+  try {
+    const res = await fetch(`${API_URL}/salir_sala`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id_sala: idSala,
+        jugador_id: jugadorId
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      mostrarMensajeJuego(data.error || "No se pudo salir de la partida.", "error");
+      return;
+    }
+
+    mostrarMensajeJuego(data.mensaje || "Saliste de la partida.", "success");
+
+    volverAlMenuDesdeFinal();
+    await cargarLeaderboard();
+
+  } catch (error) {
+    console.error("Error al salir de la partida:", error);
+    mostrarMensajeJuego("Error de red al salir de la partida.", "error");
+  }
 }
 
 

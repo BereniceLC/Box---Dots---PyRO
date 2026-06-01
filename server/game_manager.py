@@ -75,3 +75,22 @@ class GameManager:
 
         except Exception as e:
             return {"ok": False, "error": str(e)}
+        
+    # -------------------------------
+    # SALIR DE SALA
+    # -------------------------------
+    def salir_sala(self, id_sala, jugador_id):
+        sala = self.salas.get(id_sala)
+
+        if not sala:
+            return {"ok": False, "error": "Sala no existe"}
+
+        resultado = sala.salir_jugador(jugador_id)
+
+        if resultado.get("ok") and resultado.get("sala_vacia"):
+            self.salas.pop(id_sala, None)
+            resultado["sala_eliminada"] = True
+        else:
+            resultado["sala_eliminada"] = False
+
+        return resultado

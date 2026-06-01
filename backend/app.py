@@ -111,6 +111,30 @@ def movimiento():
         print(f"[ERROR movimiento] tardó {fin - inicio:.3f} segundos")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/salir_sala", methods=["POST"])
+def salir_sala():
+    try:
+        data = request.get_json() or {}
+
+        id_sala = data.get("id_sala")
+        jugador_id = data.get("jugador_id")
+
+        if not id_sala or not jugador_id:
+            return jsonify({
+                "ok": False,
+                "error": "Faltan datos para salir de la sala"
+            }), 400
+
+        resultado = pyro.salir_sala(id_sala, jugador_id)
+
+        status = 200 if resultado.get("ok") else 400
+
+        return jsonify(resultado), status
+
+    except Exception as e:
+        print("ERROR salir_sala:", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 @app.route("/auth", methods=["POST"])
 def auth():
     try:
@@ -155,6 +179,13 @@ def registrar_resultado():
             return jsonify({"ok": False, "error": "Falta id_sala"}), 400
 
         estado = pyro.obtener_estado(id_sala)
+
+        if estado.get("registrar_resultado_global") is False:
+            return jsonify({
+                "ok": True,
+                "registrado": False,
+                "mensaje": "La partida terminó por abandono y no suma puntos al ranking"
+            }), 200
 
         if not estado.get("terminado"):
             return jsonify({
