@@ -10,34 +10,91 @@
   <main class="app">
 
     <!-- Pantalla principal -->
-    <section id="pantallaMenu" class="screen active">
-      <div class="card hero-card">
-        <h1>Dots & Boxes</h1>
-        <p class="subtitle">
-          Juego multijugador remoto con salas y turnos usando PyRO.
-        </p>
+    <section id="pantallaMenu" class="screen active home-screen">
+      <div class="home-card card">
+        <div class="home-kicker">Juego distribuido con PyRO</div>
 
-        <div class="menu-actions">
-          <button class="btn primary" onclick="mostrarCrearSala()">
+        <div class="home-title-row">
+          <div>
+            <h1 class="home-title">
+              <span>Dots</span> <strong>&amp;</strong> <span>Boxes</span>
+            </h1>
+            <p class="subtitle home-subtitle">
+              Juego multijugador remoto con salas y turnos usando PyRO.
+            </p>
+          </div>
+
+          <div class="mini-board" aria-hidden="true">
+            <svg viewBox="0 0 80 80" class="mini-board-svg">
+              <line x1="18" y1="18" x2="40" y2="18" class="mini-line blue-line" />
+              <line x1="40" y1="18" x2="62" y2="18" class="mini-line blue-line" />
+
+              <line x1="18" y1="18" x2="18" y2="40" class="mini-line pink-line" />
+              <line x1="40" y1="18" x2="40" y2="40" class="mini-line blue-line" />
+              <line x1="62" y1="18" x2="62" y2="40" class="mini-line pink-line" />
+
+              <line x1="18" y1="40" x2="40" y2="40" class="mini-line pink-line" />
+              <line x1="40" y1="40" x2="62" y2="40" class="mini-line blue-line" />
+
+              <line x1="40" y1="40" x2="40" y2="62" class="mini-line blue-line" />
+              <line x1="62" y1="40" x2="62" y2="62" class="mini-line pink-line" />
+
+              <line x1="40" y1="62" x2="62" y2="62" class="mini-line pink-line" />
+
+              <rect x="43" y="43" width="16" height="16" rx="4" class="mini-box pink-box" />
+
+              <circle cx="18" cy="18" r="4" class="mini-dot" />
+              <circle cx="40" cy="18" r="4" class="mini-dot" />
+              <circle cx="62" cy="18" r="4" class="mini-dot" />
+
+              <circle cx="18" cy="40" r="4" class="mini-dot" />
+              <circle cx="40" cy="40" r="4" class="mini-dot" />
+              <circle cx="62" cy="40" r="4" class="mini-dot" />
+
+              <circle cx="18" cy="62" r="4" class="mini-dot" />
+              <circle cx="40" cy="62" r="4" class="mini-dot" />
+              <circle cx="62" cy="62" r="4" class="mini-dot" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="menu-actions home-actions">
+          <button class="btn primary home-action-btn" onclick="mostrarCrearSala()">
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="btn-svg">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
             Crear sala
           </button>
 
-          <button class="btn secondary" onclick="mostrarUnirseSala()">
+          <button class="btn secondary home-action-btn join" onclick="mostrarUnirseSala()">
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="btn-svg">
+                <circle cx="9" cy="8" r="3"></circle>
+                <circle cx="17" cy="9" r="2.5"></circle>
+                <path d="M3.5 20c.7-3.8 3.2-6 5.5-6s4.8 2.2 5.5 6"></path>
+                <path d="M13.5 15.2c2.8.2 5 2 5.8 4.8"></path>
+              </svg>
+            </span>
             Unirse a sala
           </button>
         </div>
 
-        <div class="leaderboard-box">
-          <h3>Mejores puntuaciones</h3>
+        <section class="leaderboard-box home-leaderboard">
+          <div class="leaderboard-header">
+            <h3> Mejores puntuaciones</h3>
+            <span class="leaderboard-caption">Ranking global</span>
+          </div>
 
           <div id="leaderboardLista" class="leaderboard-list">
             Cargando ranking...
           </div>
 
-          <button class="btn small" onclick="cargarLeaderboard()">
-            Actualizar ranking
+          <button class="btn small ranking-refresh" onclick="cargarLeaderboard()">
+            ↻ Actualizar ranking
           </button>
-        </div>
+        </section>
       </div>
     </section>
 

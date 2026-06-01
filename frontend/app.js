@@ -93,7 +93,11 @@ async function cargarLeaderboard() {
   const contenedor = document.getElementById("leaderboardLista");
 
   if (contenedor) {
-    contenedor.textContent = "Cargando ranking...";
+    contenedor.innerHTML = `
+      <div class="leaderboard-empty">
+        Cargando ranking...
+      </div>
+    `;
   }
 
   try {
@@ -109,8 +113,13 @@ async function cargarLeaderboard() {
 
     if (!contenedor) return;
 
-    if (data.leaderboard.length === 0) {
-      contenedor.textContent = "Aún no hay puntuaciones.";
+    if (!data.leaderboard || data.leaderboard.length === 0) {
+      contenedor.innerHTML = `
+        <div class="leaderboard-empty">
+          Aún no hay puntuaciones.<br>
+          Termina una partida para aparecer en el ranking.
+        </div>
+      `;
       return;
     }
 
@@ -120,12 +129,35 @@ async function cargarLeaderboard() {
       const fila = document.createElement("div");
       fila.className = "leaderboard-row";
 
+      const nombre = jugador.username || "Jugador";
+      const iniciales = nombre
+        .trim()
+        .split(/\s+/)
+        .map(parte => parte.charAt(0))
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
+      const posicion = index + 1;
+      const partidas = jugador.games_played ?? 0;
+      const victorias = jugador.wins ?? 0;
+      const puntos = jugador.total_points ?? 0;
+
       fila.innerHTML = `
-        <div>
-          <strong>${index + 1}. ${jugador.username}</strong>
-          <small>${jugador.games_played} partidas | ${jugador.wins} victorias</small>
-        </div>
-        <strong>${jugador.total_points} pts</strong>
+        <span class="rank-medal rank-${posicion <= 3 ? posicion : "normal"}">
+          ${posicion}
+        </span>
+
+        <span class="rank-avatar">
+          ${iniciales || "?"}
+        </span>
+
+        <span class="rank-info">
+          <strong>${nombre}</strong>
+          <small>${partidas} partidas | ${victorias} victorias</small>
+        </span>
+
+        <strong class="rank-points">${puntos} pts</strong>
       `;
 
       contenedor.appendChild(fila);
@@ -135,7 +167,12 @@ async function cargarLeaderboard() {
     console.error("Error leaderboard:", error);
 
     if (contenedor) {
-      contenedor.textContent = "No se pudo cargar el ranking.";
+      contenedor.innerHTML = `
+        <div class="leaderboard-error">
+          No se pudo cargar el ranking.<br>
+          Verifica que el backend esté encendido.
+        </div>
+      `;
     }
   }
 }
