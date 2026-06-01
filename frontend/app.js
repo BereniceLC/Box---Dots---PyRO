@@ -47,25 +47,35 @@ function mostrarPantalla(idPantalla) {
     mostrarPantalla("pantallaJuego");
     }
 
-    function mostrarMensajeJuego(mensaje) {
-    const contenedor = document.getElementById("mensajeJuego");
+    function mostrarMensajeJuego(mensaje, tipo = "info") {
+      const contenedor = document.getElementById("mensajeJuego");
 
-    if (contenedor) {
-        contenedor.textContent = mensaje;
+      if (!contenedor) return;
+
+      contenedor.textContent = mensaje;
+
+      contenedor.classList.remove(
+        "is-info",
+        "is-success",
+        "is-warning",
+        "is-error"
+      );
+
+      contenedor.classList.add(`is-${tipo}`);
     }
-    }
+
 
 async function copiarCodigoSala() {
     if (!idSala) {
-        mostrarMensajeJuego("No hay código de sala para copiar.");
+        mostrarMensajeJuego("No hay código de sala para copiar.", "warning");
         return;
     }
 
     try {
         await navigator.clipboard.writeText(idSala);
-        mostrarMensajeJuego(`Código ${idSala} copiado al portapapeles.`);
+        mostrarMensajeJuego(`Código ${idSala} copiado al portapapeles.`, "success");
     } catch (error) {
-        mostrarMensajeJuego(`Código de sala: ${idSala}`);
+        mostrarMensajeJuego(`Código de sala: ${idSala}`, "error");
     }
 }
 
@@ -484,7 +494,10 @@ async function crearSala() {
     if (codigoBox) codigoBox.classList.remove("hidden");
 
     mostrarJuego();
-    mostrarMensajeJuego(`Sala creada. Comparte el código ${idSala} con los demás jugadores.`);
+    mostrarMensajeJuego(
+      `Sala creada. Comparte el código ${idSala} con los demás jugadores.`,
+      "success"
+    );
 
     await actualizarEstado();
     iniciarActualizacionEstado();
@@ -563,7 +576,10 @@ async function unirseSala() {
         codigoJuego.textContent = idSala;
     }
     mostrarJuego();
-    mostrarMensajeJuego(`Has unido a la sala ${idSala}.Esperando turno...`);
+    mostrarMensajeJuego(
+      `Te uniste a la sala ${idSala}. Esperando turno...`,
+      "success"
+    );
 
     console.log("Unido a sala:", idSala);
     console.log("Jugador:", jugadorId);
@@ -881,102 +897,172 @@ vertical.forEach((fila, i) => {
 });
 }
 
+function obtenerJugadorTurnoActual() {
+  if (!estado || !estado.jugadores) return null;
+  return estado.jugadores.find(jugador => jugador.id === estado.turno) || null;
+}
+
+function esTurnoDelJugadorActual() {
+  return Boolean(
+    estado &&
+    jugadorId &&
+    estado.turno &&
+    estado.turno === jugadorId &&
+    !estado.terminado
+  );
+}
+
+function obtenerPuntosJugadorActual() {
+  if (!estado || !estado.jugadores || !jugadorId) return 0;
+
+  const jugador = estado.jugadores.find(j => j.id === jugadorId);
+  return jugador ? jugador.puntos : 0;
+}
+
+function obtenerLineaMasCercana(x, y) {
+  if (!estado || !estado.tablero) return null;
+
+  const { horizontal, vertical } = estado.tablero;
+
+  let mejor = null;
+  let minDist = 15;
+
+  for (let i = 0; i < horizontal.length; i++) {
+    for (let j = 0; j < horizontal[i].length; j++) {
+      if (horizontal[i][j]) continue;
+
+      const x1 = offset + j * spacing;
+      const y1 = offset + i * spacing;
+      const x2 = offset + (j + 1) * spacing;
+      const y2 = y1;
+
+      const dist = distanciaLinea(x, y, x1, y1, x2, y2);
+
+      if (dist < minDist) {
+        minDist = dist;
+        mejor = {
+          tipo: "H",
+          fila: i,
+          col: j
+        };
+      }
+    }
+  }
+
+  for (let i = 0; i < vertical.length; i++) {
+    for (let j = 0; j < vertical[i].length; j++) {
+      if (vertical[i][j]) continue;
+
+      const x1 = offset + j * spacing;
+      const y1 = offset + i * spacing;
+      const x2 = x1;
+      const y2 = offset + (i + 1) * spacing;
+
+      const dist = distanciaLinea(x, y, x1, y1, x2, y2);
+
+      if (dist < minDist) {
+        minDist = dist;
+        mejor = {
+          tipo: "V",
+          fila: i,
+          col: j
+        };
+      }
+    }
+  }
+
+  return mejor;
+}
+
 // Detectar clics
 canvas.addEventListener("click", async (e) => {
-    if (!estado || !estado.tablero) return;
+  if (!estado || !estado.tablero) {
+    mostrarMensajeJuego("La partida todavía no está lista.", "warning");
+    return;
+  }
 
-    const x = e.offsetX;
-    const y = e.offsetY;
+  if (estado.terminado) {
+    mostrarMensajeJuego("La partida ya terminó. Revisa el resultado final.", "warning");
+    return;
+  }
 
-    const { horizontal, vertical } = estado.tablero;
+  const jugadorTurno = obtenerJugadorTurnoActual();
 
-    let mejor = null;
-    let minDist = 15;
+  if (!jugadorTurno) {
+    mostrarMensajeJuego("La partida está esperando jugadores.", "warning");
+    return;
+  }
 
-    // Buscar línea horizontal más cercana usando el tamaño real del tablero
-    for (let i = 0; i < horizontal.length; i++) {
-      for (let j = 0; j < horizontal[i].length; j++) {
-        // Si la línea ya está ocupada, la ignoramos
-        if (horizontal[i][j]) continue;
+  if (!esTurnoDelJugadorActual()) {
+    mostrarMensajeJuego(
+      `No es tu turno. Espera a que juegue ${jugadorTurno.nombre}.`,
+      "warning"
+    );
+    return;
+  }
 
-        const x1 = offset + j * spacing;
-        const y1 = offset + i * spacing;
-        const x2 = offset + (j + 1) * spacing;
-        const y2 = y1;
+  const x = e.offsetX;
+  const y = e.offsetY;
 
-        const dist = distanciaLinea(x, y, x1, y1, x2, y2);
+  const mejor = obtenerLineaMasCercana(x, y);
 
-        if (dist < minDist) {
-          minDist = dist;
-          mejor = {
-            tipo: "H",
-            fila: i,
-            col: j
-          };
-        }
-      }
+  if (!mejor) {
+    mostrarMensajeJuego("Selecciona una línea disponible del tablero.", "warning");
+    return;
+  }
+
+  const puntosAntes = obtenerPuntosJugadorActual();
+
+  try {
+    const res = await fetch(`${API_URL}/movimiento`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id_sala: idSala,
+        jugador_id: jugadorId,
+        tipo: mejor.tipo,
+        fila: mejor.fila,
+        col: mejor.col
+      })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Error del servidor en movimiento:", text);
+      mostrarMensajeJuego("Error del servidor al registrar el movimiento.", "error");
+      return;
     }
 
-    // Buscar línea vertical más cercana usando el tamaño real del tablero
-    for (let i = 0; i < vertical.length; i++) {
-      for (let j = 0; j < vertical[i].length; j++) {
-        // Si la línea ya está ocupada, la ignoramos
-        if (vertical[i][j]) continue;
+    const data = await res.json();
 
-        const x1 = offset + j * spacing;
-        const y1 = offset + i * spacing;
-        const x2 = x1;
-        const y2 = offset + (i + 1) * spacing;
+    console.log("Respuesta movimiento:", data);
 
-        const dist = distanciaLinea(x, y, x1, y1, x2, y2);
-
-        if (dist < minDist) {
-          minDist = dist;
-          mejor = {
-            tipo: "V",
-            fila: i,
-            col: j
-          };
-        }
-      }
-    }
-
-    if (!mejor) return;
-
-    try {
-      const res = await fetch(`${API_URL}/movimiento`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          id_sala: idSala,
-          jugador_id: jugadorId,
-          tipo: mejor.tipo,
-          fila: mejor.fila,
-          col: mejor.col
-        })
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Error del servidor en movimiento:", text);
-        return;
-      }
-
-      const data = await res.json();
-
-      console.log("Respuesta movimiento:", data);
-
-      if (!data.ok) {
-        alert(data.error || "Movimiento rechazado");
-        await actualizarEstado();
-        return;
-      }
-
+    if (!data.ok) {
+      mostrarMensajeJuego(data.error || "Movimiento rechazado.", "warning");
       await actualizarEstado();
-
-    } catch (error) {
-      console.error("Error de red al enviar movimiento:", error);
+      return;
     }
+
+    await actualizarEstado();
+
+    const puntosDespues = obtenerPuntosJugadorActual();
+
+    if (puntosDespues > puntosAntes) {
+      mostrarMensajeJuego(
+        "¡Completaste un cuadro! Conservas el turno.",
+        "success"
+      );
+    } else {
+      mostrarMensajeJuego(
+        "Movimiento registrado. Esperando el siguiente turno.",
+        "success"
+      );
+    }
+
+  } catch (error) {
+    console.error("Error de red al enviar movimiento:", error);
+    mostrarMensajeJuego("Error de red al enviar el movimiento.", "error");
+  }
 });
 
 function distanciaLinea(px, py, x1, y1, x2, y2) {
