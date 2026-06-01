@@ -12,6 +12,8 @@ let ganadorMostrado = false;
 
 let resultadoGlobalRegistrado = false;
 
+let lineaPreview = null;
+
 const spacing = 60;
 const offset = 50;
 const API_PORT = window.location.port === "30080" ? "30050" : "5000";
@@ -895,6 +897,8 @@ vertical.forEach((fila, i) => {
     }
   });
 });
+
+dibujarPreviewMovimiento();
 }
 
 function obtenerJugadorTurnoActual() {
@@ -974,6 +978,91 @@ function obtenerLineaMasCercana(x, y) {
   return mejor;
 }
 
+function esMismaLinea(lineaA, lineaB) {
+  if (!lineaA && !lineaB) return true;
+  if (!lineaA || !lineaB) return false;
+
+  return (
+    lineaA.tipo === lineaB.tipo &&
+    lineaA.fila === lineaB.fila &&
+    lineaA.col === lineaB.col
+  );
+}
+
+function limpiarPreviewMovimiento() {
+  if (!lineaPreview) return;
+
+  lineaPreview = null;
+  dibujar();
+}
+
+function dibujarPreviewMovimiento() {
+  if (!lineaPreview || !esTurnoDelJugadorActual()) return;
+
+  const color = obtenerColorJugador(jugadorId);
+
+  let x1;
+  let y1;
+  let x2;
+  let y2;
+
+  if (lineaPreview.tipo === "H") {
+    x1 = offset + lineaPreview.col * spacing;
+    y1 = offset + lineaPreview.fila * spacing;
+    x2 = offset + (lineaPreview.col + 1) * spacing;
+    y2 = y1;
+  } else {
+    x1 = offset + lineaPreview.col * spacing;
+    y1 = offset + lineaPreview.fila * spacing;
+    x2 = x1;
+    y2 = offset + (lineaPreview.fila + 1) * spacing;
+  }
+
+  ctx.save();
+
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 9;
+  ctx.lineCap = "round";
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 18;
+
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.95;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+canvas.addEventListener("mousemove", (e) => {
+  if (!estado || !estado.tablero || !esTurnoDelJugadorActual()) {
+    limpiarPreviewMovimiento();
+    return;
+  }
+
+  const nuevaPreview = obtenerLineaMasCercana(e.offsetX, e.offsetY);
+
+  if (esMismaLinea(lineaPreview, nuevaPreview)) return;
+
+  lineaPreview = nuevaPreview;
+  dibujar();
+});
+
+canvas.addEventListener("mouseleave", () => {
+  limpiarPreviewMovimiento();
+});
+
 // Detectar clics
 canvas.addEventListener("click", async (e) => {
   if (!estado || !estado.tablero) {
@@ -1010,6 +1099,9 @@ canvas.addEventListener("click", async (e) => {
     mostrarMensajeJuego("Selecciona una línea disponible del tablero.", "warning");
     return;
   }
+
+  lineaPreview = null;
+  dibujar();
 
   const puntosAntes = obtenerPuntosJugadorActual();
 
