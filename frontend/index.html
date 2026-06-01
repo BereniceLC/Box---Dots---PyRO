@@ -165,27 +165,45 @@
     </section>
 
     <!-- Pantalla de juego -->
-    <section id="pantallaJuego" class="screen">
-      <div class="game-layout">
+    <section id="pantallaJuego" class="screen game-screen">
+      <div class="game-layout game-layout-v2">
 
-        <aside class="sidebar card">
-          <h2>Partida</h2>
+        <aside class="sidebar game-sidebar card">
+          <div class="sidebar-header">
+            <div>
+              <span class="sidebar-kicker">Sala multijugador</span>
+              <h2>Partida</h2>
+            </div>
+          </div>
 
-          <div class="info-block">
+          <div class="info-block room-code-card">
             <span>Código de sala</span>
-            <strong id="codigoSalaJuego">------</strong>
-            <button class="btn small" onclick="copiarCodigoSala()">
-              Copiar
-            </button>
+
+            <div class="room-code-row">
+              <strong id="codigoSalaJuego">------</strong>
+
+              <button class="btn small copy-room-btn" onclick="copiarCodigoSala()">
+                Copiar
+              </button>
+            </div>
           </div>
 
-          <div class="info-block">
-            <span>Turno actual</span>
-            <strong id="turnoActualTexto">Esperando...</strong>
+          <div class="info-block room-status-card">
+            <div class="status-line">
+              <span class="status-dot active"></span>
+
+              <div>
+                <strong id="estadoSalaTexto">Sala activa</strong>
+                <small id="estadoSalaDetalle">Esperando jugadores...</small>
+              </div>
+            </div>
+
+            <span id="contadorJugadores" class="players-count">0 / 4</span>
           </div>
 
-          <div class="info-block">
+          <div class="info-block players-card">
             <span>Jugadores</span>
+
             <div id="listaJugadores" class="players-list">
               Esperando jugadores...
             </div>
@@ -194,16 +212,46 @@
           <div id="mensajeJuego" class="game-message">
             Crea o únete a una sala para comenzar.
           </div>
+
+          <button class="btn exit-game-btn" onclick="salirPartidaLocal()">
+            Salir de la partida
+          </button>
         </aside>
 
-        <section class="board-card card">
-            <div class = "board-wrapper">
-                <canvas id="gameCanvas" width="600" height="600"></canvas>
+        <main class="board-area card">
+          <section class="turn-board-header">
+            <div class="turn-banner">
+              <span id="turnoBadgeTexto" class="turn-badge">Esperando</span>
+
+              <h2 id="turnoActualTexto">Esperando...</h2>
+
+              <p id="turnoDetalleTexto">
+                Cuando haya suficientes jugadores, comenzará la partida.
+              </p>
             </div>
-        </section>
+
+            <div id="jugadoresTurnoBar" class="turn-player-chips">
+              <div class="turn-player-chip waiting">
+                Esperando jugadores...
+              </div>
+            </div>
+          </section>
+
+          <section class="board-card board-card-v2">
+            <div class="board-wrapper">
+              <canvas id="gameCanvas" width="600" height="600"></canvas>
+            </div>
+          </section>
+
+          <section class="board-tip">
+            <span>💡 Consejo:</span>
+            Completa cuadros para conservar tu turno y sumar más puntos.
+          </section>
+        </main>
 
       </div>
-
+    </section>
+    <section>
       <div id="modalFinal" class="modal-overlay hidden">
         <div class="modal-card">
           <h2>Juego terminado</h2>
@@ -218,7 +266,6 @@
           </div>
         </div>
       </div>
-
     </section>
 
   </main>

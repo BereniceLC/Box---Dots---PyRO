@@ -203,40 +203,205 @@ async function registrarResultadoGlobal() {
   }
 }
 
+function escaparHTML(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function obtenerIniciales(nombre) {
+  return String(nombre || "J")
+    .trim()
+    .split(/\s+/)
+    .map(parte => parte.charAt(0))
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+}
+
+function obtenerAvatarJugador(jugador) {
+  const avatares = {
+    rojo: "assets/avatars/avatar-rojo.png",
+    azul: "assets/avatars/avatar-azul.png",
+    verde: "assets/avatars/avatar-verde.png",
+    morado: "assets/avatars/avatar-morado.png"
+  };
+
+  return avatares[jugador?.color] || "assets/avatars/avatar-default.png";
+}
+
 function actualizarPanelJuego() {
-    if (!estado || !estado.jugadores) return;
+  if (!estado || !estado.jugadores) return;
 
-    const turnoTexto = document.getElementById("turnoActualTexto");
-    const listaJugadores = document.getElementById("listaJugadores");
+  const turnoTexto = document.getElementById("turnoActualTexto");
+  const turnoBadgeTexto = document.getElementById("turnoBadgeTexto");
+  const turnoDetalleTexto = document.getElementById("turnoDetalleTexto");
+  const listaJugadores = document.getElementById("listaJugadores");
+  const jugadoresTurnoBar = document.getElementById("jugadoresTurnoBar");
+  const estadoSalaTexto = document.getElementById("estadoSalaTexto");
+  const estadoSalaDetalle = document.getElementById("estadoSalaDetalle");
+  const contadorJugadores = document.getElementById("contadorJugadores");
+  const boardCard = document.querySelector(".board-card");
 
-    const jugadorTurno = estado.jugadores.find(j => j.id === estado.turno);
+  const jugadores = estado.jugadores || [];
+  const jugadorTurno = jugadores.find(j => j.id === estado.turno);
+  const esMiTurno = jugadorTurno && jugadorTurno.id === jugadorId;
 
-    if (turnoTexto) {
-        turnoTexto.textContent = jugadorTurno
-        ? jugadorTurno.nombre
-        : "Esperando...";
+  if (contadorJugadores) {
+    contadorJugadores.textContent = `${jugadores.length} / 4`;
+  }
+
+  if (estadoSalaTexto && estadoSalaDetalle) {
+    if (estado.terminado) {
+      estadoSalaTexto.textContent = "Partida finalizada";
+      estadoSalaDetalle.textContent = "La partida ya terminó.";
+    } else if (estado.iniciada) {
+      estadoSalaTexto.textContent = "Partida en curso";
+      estadoSalaDetalle.textContent = "Los jugadores están jugando por turnos.";
+    } else {
+      estadoSalaTexto.textContent = "Sala activa";
+      estadoSalaDetalle.textContent = "Esperando a que entre otro jugador...";
+    }
+  }
+
+  if (turnoTexto) {
+    if (estado.terminado) {
+      turnoTexto.textContent = "Juego terminado";
+    } else if (jugadorTurno) {
+      turnoTexto.textContent = esMiTurno
+        ? "Es tu turno"
+        : `Turno de ${jugadorTurno.nombre}`;
+    } else {
+      turnoTexto.textContent = "Esperando...";
+    }
+  }
+
+  if (turnoBadgeTexto) {
+    if (estado.terminado) {
+      turnoBadgeTexto.textContent = "Finalizado";
+      turnoBadgeTexto.className = "turn-badge ended";
+    } else if (esMiTurno) {
+      turnoBadgeTexto.textContent = "Tu turno";
+      turnoBadgeTexto.className = "turn-badge my-turn";
+    } else if (jugadorTurno) {
+      turnoBadgeTexto.textContent = "Espera";
+      turnoBadgeTexto.className = "turn-badge waiting-turn";
+    } else {
+      turnoBadgeTexto.textContent = "Esperando";
+      turnoBadgeTexto.className = "turn-badge waiting-turn";
+    }
+  }
+
+  if (turnoDetalleTexto) {
+    if (estado.terminado) {
+      turnoDetalleTexto.textContent = "Revisa el resultado final de la partida.";
+    } else if (esMiTurno) {
+      turnoDetalleTexto.textContent = "Elige una línea del tablero. Si completas un cuadro, conservas el turno.";
+    } else if (jugadorTurno) {
+      turnoDetalleTexto.textContent = `Espera a que ${jugadorTurno.nombre} realice su movimiento.`;
+    } else {
+      turnoDetalleTexto.textContent = "Cuando haya suficientes jugadores, comenzará la partida.";
+    }
+  }
+
+  if (boardCard) {
+    boardCard.classList.toggle("is-my-turn", Boolean(esMiTurno && !estado.terminado));
+    boardCard.classList.toggle("is-waiting-turn", Boolean(!esMiTurno && jugadorTurno && !estado.terminado));
+  }
+
+  if (listaJugadores) {
+    listaJugadores.innerHTML = "";
+
+    if (jugadores.length === 0) {
+      listaJugadores.innerHTML = `
+        <div class="player-row player-empty">
+          Esperando jugadores...
+        </div>
+      `;
     }
 
-    if (listaJugadores) {
-        listaJugadores.innerHTML = "";
+    jugadores.forEach(jugador => {
+      const fila = document.createElement("div");
+      const color = obtenerColorJugador(jugador.id);
+      const esJugadorActual = jugador.id === jugadorId;
+      const tieneTurno = jugador.id === estado.turno;
 
-        estado.jugadores.forEach(jugador => {
-        const fila = document.createElement("div");
-        fila.className = "player-row";
+      fila.className = `player-row player-row-v2 ${tieneTurno ? "active-turn" : ""} ${esJugadorActual ? "is-me" : ""}`;
 
-        const color = obtenerColorJugador(jugador.id);
+      fila.style.setProperty("--player-color", color);
 
-        fila.innerHTML = `
-            <div class="player-name">
-            <span class="color-dot" style="background:${color}"></span>
-            <strong>${jugador.nombre}</strong>
-            </div>
-            <span>${jugador.puntos} pts</span>
-        `;
+      fila.innerHTML = `
+        <div class="player-name">
+          <span class="color-dot" style="background:${color}"></span>
 
-        listaJugadores.appendChild(fila);
-        });
+          <span class="player-avatar">
+            <img
+              src="${obtenerAvatarJugador(jugador)}" 
+              alt="Avatar de ${escaparHTML(jugador.nombre)}"
+            >
+          </span>
+
+          <div>
+            <strong>${escaparHTML(jugador.nombre)}</strong>
+            ${esJugadorActual ? `<small>T\u00fa</small>` : ""}
+          </div>
+        </div>
+
+        <span class="player-score">${jugador.puntos} pts</span>
+      `;
+
+      listaJugadores.appendChild(fila);
+    });
+  }
+
+  if (jugadoresTurnoBar) {
+    jugadoresTurnoBar.innerHTML = "";
+
+    jugadores.forEach(jugador => {
+      const chip = document.createElement("div");
+      const color = obtenerColorJugador(jugador.id);
+      const esJugadorActual = jugador.id === jugadorId;
+      const tieneTurno = jugador.id === estado.turno;
+
+      chip.className = `turn-player-chip ${tieneTurno ? "active" : ""} ${esJugadorActual ? "is-me" : ""}`;
+      chip.style.setProperty("--player-color", color);
+
+      chip.innerHTML = `
+        <span class="turn-chip-avatar">
+          <img 
+            src="${obtenerAvatarJugador(jugador)}" 
+            alt="Avatar de ${escaparHTML(jugador.nombre)}"
+          >
+        </span>
+
+
+        <span class="turn-chip-info">
+          <strong>${escaparHTML(jugador.nombre)}</strong>
+          <small>
+            ${jugador.puntos} pts${esJugadorActual ? " · T\u00fa" : ""}
+          </small>
+        </span>
+      `;
+
+      jugadoresTurnoBar.appendChild(chip);
+    });
+
+    while (jugadoresTurnoBar.children.length < 4) {
+      const waitingChip = document.createElement("div");
+      waitingChip.className = "turn-player-chip waiting";
+      waitingChip.innerHTML = `
+        <span class="turn-chip-avatar empty">+</span>
+        <span class="turn-chip-info">
+          <strong>Esperando</strong>
+          <small>Jugador disponible</small>
+        </span>
+      `;
+      jugadoresTurnoBar.appendChild(waitingChip);
     }
+  }
 }
 
 async function crearSalaDesdeMenu() {
@@ -582,6 +747,18 @@ function verificarFinDelJuego() {
   modalFinal.classList.remove("hidden");
   registrarResultadoGlobal();
 }
+
+function salirPartidaLocal() {
+  const confirmar = confirm(
+    "¿Quieres salir de la partida?\n\nPor ahora saldrás de la pantalla localmente. La sala seguirá existiendo para los demás jugadores."
+  );
+
+  if (!confirmar) return;
+
+  volverAlMenuDesdeFinal();
+  cargarLeaderboard();
+}
+
 
 function volverAlMenuDesdeFinal() {
   const modalFinal = document.getElementById("modalFinal");
