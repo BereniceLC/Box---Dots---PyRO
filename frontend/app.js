@@ -1262,16 +1262,11 @@ function obtenerAudioMusica() {
 }
 
 function obtenerVolumenGuardado() {
-  const volumenGuardado = localStorage.getItem(MUSIC_VOLUME_KEY);
-  const volumen = volumenGuardado !== null ? Number(volumenGuardado) : 35;
+  const valor = Number(localStorage.getItem(MUSIC_VOLUME_KEY));
 
-  if (Number.isNaN(volumen)) return 35;
+  if (Number.isNaN(valor)) return 35;
 
-  return Math.min(100, Math.max(0, volumen));
-}
-
-function estaMusicaSilenciada() {
-  return localStorage.getItem(MUSIC_MUTED_KEY) === "true";
+  return Math.min(100, Math.max(0, valor));
 }
 
 function actualizarIconoMusica() {
@@ -1281,12 +1276,13 @@ function actualizarIconoMusica() {
 
   if (!audio || !icono || !control) return;
 
-  const estaSonando = musicaIniciada && !audio.paused && !audio.muted && audio.volume > 0;
+  const estaSilenciado = audio.muted || audio.volume === 0;
+  const estaSonando = !audio.paused && !estaSilenciado;
 
-  control.classList.toggle("is-muted", audio.muted || audio.volume === 0);
+  control.classList.toggle("is-muted", estaSilenciado);
   control.classList.toggle("is-playing", estaSonando);
 
-  if (audio.muted || audio.volume === 0) {
+  if (estaSilenciado) {
     icono.textContent = "🔇";
   } else if (estaSonando) {
     icono.textContent = "🔊";
@@ -1295,31 +1291,17 @@ function actualizarIconoMusica() {
   }
 }
 
-function inicializarMusica() {
+async function reproducirMusica() {
   const audio = obtenerAudioMusica();
-  const slider = document.getElementById("musicVolume");
 
-  if (!audio) return;
-
-  const volumen = obtenerVolumenGuardado();
-  const silenciada = estaMusicaSilenciada();
-
-  audio.volume = volumen / 100;
-  audio.muted = silenciada;
-
-  if (slider) {
-    slider.value = volumen;
+  if (!audio) {
+    console.warn("[Música] No se encontró #bgMusic.");
+    return false;
   }
 
-  actualizarIconoMusica();
-}
-
-async function iniciarMusica() {
-  const audio = obtenerAudioMusica();
-
-  if (!audio) return false;
-
   try {
+    audio.muted = false;
+
     if (audio.volume === 0) {
       audio.volume = 0.35;
       localStorage.setItem(MUSIC_VOLUME_KEY, "35");
@@ -1328,47 +1310,79 @@ async function iniciarMusica() {
       if (slider) slider.value = 35;
     }
 
-    audio.muted = false;
-    localStorage.setItem(MUSIC_MUTED_KEY, "false");
-
     await audio.play();
 
     musicaIniciada = true;
+    localStorage.setItem(MUSIC_MUTED_KEY, "false");
+
     actualizarIconoMusica();
 
+    console.log("[Música] Reproduciendo.");
     return true;
 
   } catch (error) {
-    console.warn("No se pudo reproducir la música:", error);
+    console.error("[Música] No se pudo reproducir:", error);
     actualizarIconoMusica();
     return false;
   }
 }
 
 async function toggleMusic() {
-  const audio = obtenerAudioMusica();
+  const audio = document.getElementById("bgMusic");
+  const icono = document.getElementById("musicIcon");
+  const control = document.getElementById("musicControl");
 
-  if (!audio) return;
-
-  if (!musicaIniciada || audio.paused) {
-    const iniciado = await iniciarMusica();
-
-    if (iniciado) {
-      mostrarMensajeJuego?.("Música activada.", "success");
-    }
-
+  if (!audio) {
+    console.warn("[Música] No existe #bgMusic");
     return;
   }
 
-  audio.muted = !audio.muted;
-  localStorage.setItem(MUSIC_MUTED_KEY, String(audio.muted));
+  console.log("[Música] Click en botón", {
+    paused: audio.paused,
+    muted: audio.muted,
+    volume: audio.volume,
+    src: audio.currentSrc || audio.src
+  });
 
-  actualizarIconoMusica();
+  try {
+    if (audio.paused) {
+      audio.muted = false;
 
-  if (audio.muted) {
-    mostrarMensajeJuego?.("Música silenciada.", "info");
-  } else {
-    mostrarMensajeJuego?.("Música activada.", "success");
+      if (audio.volume === 0) {
+        audio.volume = 0.35;
+      }
+
+      await audio.play();
+
+      musicaIniciada = true;
+      localStorage.setItem(MUSIC_MUTED_KEY, "false");
+
+      if (icono) icono.textContent = "🔊";
+      if (control) {
+        control.classList.remove("is-muted");
+        control.classList.add("is-playing");
+      }
+
+      console.log("[Música] Reproduciendo desde botón");
+      return;
+    }
+
+    audio.muted = !audio.muted;
+    localStorage.setItem(MUSIC_MUTED_KEY, String(audio.muted));
+
+    if (icono) {
+      icono.textContent = audio.muted ? "🔇" : "🔊";
+    }
+
+    if (control) {
+      control.classList.toggle("is-muted", audio.muted);
+      control.classList.toggle("is-playing", !audio.muted);
+    }
+
+    console.log("[Música] Mute cambiado:", audio.muted);
+
+  } catch (error) {
+    console.error("[Música] Error al reproducir desde botón:", error);
   }
 }
 
@@ -1390,30 +1404,88 @@ async function cambiarVolumenMusica(valor) {
     localStorage.setItem(MUSIC_MUTED_KEY, "false");
   }
 
-  if (!musicaIniciada || audio.paused) {
-    await iniciarMusica();
+  if (audio.paused && volumen > 0) {
+    await reproducirMusica();
   }
 
   actualizarIconoMusica();
 }
 
+function inicializarMusica() {
+  const audio = obtenerAudioMusica();
+  const slider = document.getElementById("musicVolume");
+
+  if (!audio) {
+    console.warn("[Música] No se encontró #bgMusic.");
+    return;
+  }
+
+  const volumen = obtenerVolumenGuardado();
+  const silenciada = localStorage.getItem(MUSIC_MUTED_KEY) === "true";
+
+  audio.volume = volumen / 100;
+  audio.muted = silenciada;
+
+  if (slider) {
+    slider.value = volumen;
+  }
+
+  actualizarIconoMusica();
+
+  console.log("[Música] Inicializada.", {
+    src: audio.currentSrc || audio.src,
+    volume: audio.volume,
+    muted: audio.muted
+  });
+}
+
 function conectarControlesMusica() {
+  const boton = document.getElementById("musicToggle");
+  const slider = document.getElementById("musicVolume");
+
+  if (!boton) {
+    console.warn("[Música] No se encontró #musicToggle.");
+  } else {
+    boton.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      toggleMusic();
+    });
+
+    console.log("[Música] Botón conectado.");
+  }
+
+  if (!slider) {
+    console.warn("[Música] No se encontró #musicVolume.");
+  } else {
+    slider.addEventListener("input", (e) => {
+      cambiarVolumenMusica(e.target.value);
+    });
+
+    console.log("[Música] Slider conectado.");
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  cargarLeaderboard();
+  inicializarMusica();
+
   const botonMusica = document.getElementById("musicToggle");
   const sliderMusica = document.getElementById("musicVolume");
 
   if (botonMusica) {
-    botonMusica.addEventListener("click", toggleMusic);
+    botonMusica.onclick = async () => {
+      console.log("[Música] Click directo detectado");
+      await toggleMusic();
+    };
+  } else {
+    console.warn("[Música] No se encontró #musicToggle");
   }
 
   if (sliderMusica) {
-    sliderMusica.addEventListener("input", (e) => {
-      cambiarVolumenMusica(e.target.value);
-    });
+    sliderMusica.oninput = async (e) => {
+      await cambiarVolumenMusica(e.target.value);
+    };
+  } else {
+    console.warn("[Música] No se encontró #musicVolume");
   }
-}
-
-window.addEventListener("load", () => {
-    cargarLeaderboard();
-    inicializarMusica();
-    conectarControlesMusica();
 });
