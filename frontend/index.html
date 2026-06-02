@@ -6,6 +6,31 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <audio id="bgMusic" src="assets/audio/music.mp3" loop preload="auto"></audio>
+
+  <div class="music-control" id="musicControl">
+    <button 
+      type="button" 
+      class="music-toggle" 
+      id="musicToggle" 
+      title="Música"
+    >
+      <span id="musicIcon">♪</span>
+    </button>
+
+    <div class="music-panel">
+      <span class="music-label">Música</span>
+
+      <input 
+        id="musicVolume" 
+        class="music-volume" 
+        type="range" 
+        min="0" 
+        max="100" 
+        value="35"
+      >
+    </div>
+  </div>
 
   <main class="app">
 

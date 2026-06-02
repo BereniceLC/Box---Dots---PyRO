@@ -19,6 +19,9 @@ const offset = 50;
 const API_PORT = window.location.port === "30080" ? "30050" : "5000";
 const API_URL = `http://${window.location.hostname}:${API_PORT}`;
 
+const MUSIC_VOLUME_KEY = "boxdots_music_volume";
+const MUSIC_MUTED_KEY = "boxdots_music_muted";
+
 function mostrarPantalla(idPantalla) {
     const pantallas = document.querySelectorAll(".screen");
 
@@ -1253,6 +1256,150 @@ function distanciaLinea(px, py, x1, y1, x2, y2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+function obtenerAudioMusica() {
+  return document.getElementById("bgMusic");
+}
+
+function obtenerVolumenGuardado() {
+  const volumenGuardado = localStorage.getItem(MUSIC_VOLUME_KEY);
+  const volumen = volumenGuardado !== null ? Number(volumenGuardado) : 35;
+
+  if (Number.isNaN(volumen)) return 35;
+
+  return Math.min(100, Math.max(0, volumen));
+}
+
+function estaMusicaSilenciada() {
+  return localStorage.getItem(MUSIC_MUTED_KEY) === "true";
+}
+
+function actualizarIconoMusica() {
+  const audio = obtenerAudioMusica();
+  const icono = document.getElementById("musicIcon");
+  const control = document.getElementById("musicControl");
+
+  if (!audio || !icono || !control) return;
+
+  control.classList.toggle("is-muted", audio.muted);
+  control.classList.toggle("is-playing", musicaIniciada && !audio.paused && !audio.muted);
+
+  if (!musicaIniciada || audio.paused) {
+    icono.textContent = "♪";
+  } else if (audio.muted || audio.volume === 0) {
+    icono.textContent = "🔇";
+  } else {
+    icono.textContent = "🔊";
+  }
+}
+
+function inicializarMusica() {
+  const audio = obtenerAudioMusica();
+  const slider = document.getElementById("musicVolume");
+
+  if (!audio) return;
+
+  const volumen = obtenerVolumenGuardado();
+  const silenciada = estaMusicaSilenciada();
+
+  audio.volume = volumen / 100;
+  audio.muted = silenciada;
+
+  if (slider) {
+    slider.value = volumen;
+  }
+
+  actualizarIconoMusica();
+}
+
+async function iniciarMusica() {
+  const audio = obtenerAudioMusica();
+
+  if (!audio) return false;
+
+  try {
+    await audio.play();
+    musicaIniciada = true;
+    actualizarIconoMusica();
+    return true;
+  } catch (error) {
+    console.warn("El navegador bloqueó la reproducción automática:", error);
+    actualizarIconoMusica();
+    return false;
+  }
+}
+
+async function toggleMusic() {
+  const audio = obtenerAudioMusica();
+
+  if (!audio) return;
+
+  if (!musicaIniciada || audio.paused) {
+    audio.muted = false;
+    localStorage.setItem(MUSIC_MUTED_KEY, "false");
+
+    const iniciado = await iniciarMusica();
+
+    if (iniciado) {
+      mostrarMensajeJuego?.("Música activada.", "success");
+    }
+
+    return;
+  }
+
+  audio.muted = !audio.muted;
+  localStorage.setItem(MUSIC_MUTED_KEY, String(audio.muted));
+
+  actualizarIconoMusica();
+
+  if (audio.muted) {
+    mostrarMensajeJuego?.("Música silenciada.", "info");
+  } else {
+    mostrarMensajeJuego?.("Música activada.", "success");
+  }
+}
+
+async function cambiarVolumenMusica(valor) {
+  const audio = obtenerAudioMusica();
+
+  if (!audio) return;
+
+  const volumen = Math.min(100, Math.max(0, Number(valor)));
+
+  audio.volume = volumen / 100;
+  localStorage.setItem(MUSIC_VOLUME_KEY, String(volumen));
+
+  if (volumen === 0) {
+    audio.muted = true;
+    localStorage.setItem(MUSIC_MUTED_KEY, "true");
+  } else {
+    audio.muted = false;
+    localStorage.setItem(MUSIC_MUTED_KEY, "false");
+  }
+
+  if (!musicaIniciada || audio.paused) {
+    await iniciarMusica();
+  }
+
+  actualizarIconoMusica();
+}
+
+function conectarControlesMusica() {
+  const botonMusica = document.getElementById("musicToggle");
+  const sliderMusica = document.getElementById("musicVolume");
+
+  if (botonMusica) {
+    botonMusica.addEventListener("click", toggleMusic);
+  }
+
+  if (sliderMusica) {
+    sliderMusica.addEventListener("input", (e) => {
+      cambiarVolumenMusica(e.target.value);
+    });
+  }
+}
+
 window.addEventListener("load", () => {
     cargarLeaderboard();
+    inicializarMusica();
+    conectarControlesMusica();
 });
