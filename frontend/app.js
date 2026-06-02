@@ -13,6 +13,7 @@ let ganadorMostrado = false;
 let resultadoGlobalRegistrado = false;
 
 let lineaPreview = null;
+let musicaIniciada = false;
 
 const spacing = 60;
 const offset = 50;
@@ -1280,15 +1281,17 @@ function actualizarIconoMusica() {
 
   if (!audio || !icono || !control) return;
 
-  control.classList.toggle("is-muted", audio.muted);
-  control.classList.toggle("is-playing", musicaIniciada && !audio.paused && !audio.muted);
+  const estaSonando = musicaIniciada && !audio.paused && !audio.muted && audio.volume > 0;
 
-  if (!musicaIniciada || audio.paused) {
-    icono.textContent = "♪";
-  } else if (audio.muted || audio.volume === 0) {
+  control.classList.toggle("is-muted", audio.muted || audio.volume === 0);
+  control.classList.toggle("is-playing", estaSonando);
+
+  if (audio.muted || audio.volume === 0) {
     icono.textContent = "🔇";
-  } else {
+  } else if (estaSonando) {
     icono.textContent = "🔊";
+  } else {
+    icono.textContent = "♪";
   }
 }
 
@@ -1317,12 +1320,26 @@ async function iniciarMusica() {
   if (!audio) return false;
 
   try {
+    if (audio.volume === 0) {
+      audio.volume = 0.35;
+      localStorage.setItem(MUSIC_VOLUME_KEY, "35");
+
+      const slider = document.getElementById("musicVolume");
+      if (slider) slider.value = 35;
+    }
+
+    audio.muted = false;
+    localStorage.setItem(MUSIC_MUTED_KEY, "false");
+
     await audio.play();
+
     musicaIniciada = true;
     actualizarIconoMusica();
+
     return true;
+
   } catch (error) {
-    console.warn("El navegador bloqueó la reproducción automática:", error);
+    console.warn("No se pudo reproducir la música:", error);
     actualizarIconoMusica();
     return false;
   }
@@ -1334,9 +1351,6 @@ async function toggleMusic() {
   if (!audio) return;
 
   if (!musicaIniciada || audio.paused) {
-    audio.muted = false;
-    localStorage.setItem(MUSIC_MUTED_KEY, "false");
-
     const iniciado = await iniciarMusica();
 
     if (iniciado) {
