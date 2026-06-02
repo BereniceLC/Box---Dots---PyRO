@@ -1328,16 +1328,14 @@ async function reproducirMusica() {
 }
 
 async function toggleMusic() {
-  const audio = document.getElementById("bgMusic");
-  const icono = document.getElementById("musicIcon");
-  const control = document.getElementById("musicControl");
+  const audio = obtenerAudioMusica();
 
   if (!audio) {
     console.warn("[Música] No existe #bgMusic");
     return;
   }
 
-  console.log("[Música] Click en botón", {
+  console.log("[Música] Botón presionado", {
     paused: audio.paused,
     muted: audio.muted,
     volume: audio.volume,
@@ -1346,43 +1344,34 @@ async function toggleMusic() {
 
   try {
     if (audio.paused) {
-      audio.muted = false;
+      const volumenGuardado = obtenerVolumenGuardado();
 
-      if (audio.volume === 0) {
-        audio.volume = 0.35;
-      }
+      audio.volume = volumenGuardado > 0 ? volumenGuardado / 100 : 0.35;
+      audio.muted = false;
 
       await audio.play();
 
       musicaIniciada = true;
-      localStorage.setItem(MUSIC_MUTED_KEY, "false");
 
-      if (icono) icono.textContent = "🔊";
-      if (control) {
-        control.classList.remove("is-muted");
-        control.classList.add("is-playing");
-      }
+      localStorage.setItem(MUSIC_MUTED_KEY, "false");
+      localStorage.setItem(MUSIC_VOLUME_KEY, String(Math.round(audio.volume * 100)));
+
+      actualizarIconoMusica();
 
       console.log("[Música] Reproduciendo desde botón");
       return;
     }
 
     audio.muted = !audio.muted;
+
     localStorage.setItem(MUSIC_MUTED_KEY, String(audio.muted));
 
-    if (icono) {
-      icono.textContent = audio.muted ? "🔇" : "🔊";
-    }
-
-    if (control) {
-      control.classList.toggle("is-muted", audio.muted);
-      control.classList.toggle("is-playing", !audio.muted);
-    }
+    actualizarIconoMusica();
 
     console.log("[Música] Mute cambiado:", audio.muted);
 
   } catch (error) {
-    console.error("[Música] Error al reproducir desde botón:", error);
+    console.error("[Música] Error al reproducir:", error);
   }
 }
 
