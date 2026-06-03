@@ -15,7 +15,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: backend
-          image: boxdots-python:latest
+          image: boxdots-python:k8s-final-v1
           imagePullPolicy: Never
           workingDir: /app/backend
           command: ["python", "-u", "app.py"]

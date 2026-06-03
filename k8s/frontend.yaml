@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: boxdots-frontend:latest
+          image: boxdots-frontend:k8s-final-v1
           imagePullPolicy: Never
           ports:
             - containerPort: 80
