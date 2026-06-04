@@ -15,7 +15,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: pyro-ns
-          image: boxdots-python:k8s-final-v1
+          image: boxdots-python:latest
           imagePullPolicy: Never
           command: ["python", "-m", "Pyro5.nameserver", "-n", "0.0.0.0", "-p", "9090"]
           ports:

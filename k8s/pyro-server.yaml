@@ -15,7 +15,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: pyro-server
-          image: boxdots-python:k8s-final-v1
+          image: boxdots-python:latest
           imagePullPolicy: Never
           workingDir: /app/server
           command: ["python", "-u", "main_server.py"]
